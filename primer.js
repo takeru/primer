@@ -207,6 +207,10 @@ Primer.Layer.prototype = {
   set strokeStyle(a) {
     this.calls.push(["strokeStyle", a])
   },
+
+  set lineWidth(a) {
+    this.calls.push(["lineWidth", a])
+  },
   
   beginPath: function() {
     this.calls.push(["beginPath"])
@@ -294,6 +298,7 @@ Primer.Layer.prototype = {
       
       switch(call[0]) {
         case "strokeStyle":      this.context.strokeStyle = call[1]; break
+        case "lineWidth":        this.context.lineWidth = call[1]; break
         case "fillStyle":        this.context.fillStyle = call[1]; break
         case "fillRect":         this.context.fillRect(call[1], call[2], call[3], call[4]); break
         case "beginPath":        this.context.beginPath(); break
