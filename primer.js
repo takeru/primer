@@ -6,6 +6,8 @@ Primer = function(container, width, height) {
   this.actions = []
   
   this.init()
+
+  this.autoDraw = true
 }
 
 Primer.prototype = {
@@ -69,11 +71,13 @@ Primer.prototype = {
     this.draw()
   },
   
-  draw: function() {
-    this.context.clearRect(0, 0, this.width, this.height)
-    $(".primer_text", this.element).remove()
-    this.setupExt()
-    this.root.draw()
+  draw: function(forceDraw) {
+    if (forceDraw || this.autoDraw) {
+      this.context.clearRect(0, 0, this.width, this.height)
+      $(".primer_text", this.element).remove()
+      this.setupExt()
+      this.root.draw()
+    }
   },
   
   ghost: function(e) {
