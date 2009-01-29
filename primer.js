@@ -32,31 +32,11 @@ Primer.prototype = {
     this.setupExt()
     
     var self = this
-    // jelc.eq(0).mousemove(function(e) {
-    //   var bounds
-    //   console.log('gah')
-    //   if (e.currentTarget.getBoundingClientRect()) {
-    //     bounds = e.currentTarget.getBoundingClientRect()
-    //   } else {
-    //     bounds = e.currentTarget.offset()
-    //   }
-    //   // var bounds = e.currentTarget.getBoundingClientRect()
-    //   e.localX = e.clientX - bounds.left
-    //   e.localY = e.clientY - bounds.top
-    //   console.log(e.localX + ', ' + e.localY)
-    //   self.ghost(e)
-    // })
     
     jelc.eq(0).bind("mousemove", function(e){
-      var bounds
-      if (e.currentTarget.offsetTop && e.currentTarget.offsetLeft) {
-        bounds = { 'top': e.currentTarget.offsetTop, 'left': e.currentTarget.offsetLeft}
-      } else {
-        bounds = e.currentTarget.getBoundingClientRect()
-      }
-      e.localX = e.clientX - bounds.left
-      e.localY = e.clientY - bounds.top
-      console.log(e.localX + ', ' + e.localY)
+      var bounds = $(e.currentTarget).offset()
+      e.localX = e.pageX - bounds.left
+      e.localY = e.pageY - bounds.top
       self.ghost(e)
     })
     
