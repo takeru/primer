@@ -11,28 +11,54 @@
       $(function() {
         // var el = $('#p1').get(0)
         var el = "#p1"
-        
+
         p1 = new Primer(el, 300, 300)
-        
+
         var box = new Primer.Layer()
         box.fillStyle = "#AAFFAA"
         box.strokeStyle = "#000000"
         box.roundedRect(0, 0, 40, 40, 10)
         box.fill()
         box.stroke()
-        box.visible = true
-        
-        // box.x = 10
-        
-        p1.addChild(box)
-        
+        box.x = 10
+        box.y = 10
+
         box.mouseover(function() {
-          box.visible = false
+          box.fillStyle = "#ff0000"
+          box.fill();
+          box.draw();
         })
-        
+
         box.mouseout(function() {
-          box.visible = true
+          box.fillStyle = "#AAFFAA"
+          box.fill();
+          box.draw();
         })
+
+        p1.addChild(box)
+
+        var subBox = new Primer.Layer()
+        subBox.fillStyle = "#dddddd"
+        subBox.strokeStyle = "#000000"
+        subBox.roundedRect(0, 0, 20, 20, 5)
+        subBox.fill()
+        subBox.stroke()
+        subBox.x = 50
+        subBox.y = 50
+
+        subBox.mouseover(function() {
+          subBox.fillStyle = "#ff0000"
+          subBox.fill();
+          p1.draw();
+        })
+
+        subBox.mouseout(function() {
+          subBox.fillStyle = "#dddddd"
+          subBox.fill();
+          p1.draw();
+        })
+
+        box.addChild(subBox);
       })
     </script>
   </head>
