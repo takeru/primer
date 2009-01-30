@@ -362,15 +362,21 @@ Primer.Layer.prototype = {
         case "fill":             this.ghostFill(e); break
       }
     }
-    
+
+    if (!jQuery.browser.safari) {
+      e.localX -= this.x
+      e.localY -= this.y
+    }
+
     for(var i in this.children) {
-      if (!jQuery.browser.safari) {
-        e.localX -= this.x
-        e.localY -= this.y
-      }
       this.children[i].ghost(e)
     }
-    
+
+    if (!jQuery.browser.safari) {
+      e.localX += this.x
+      e.localY += this.y
+    }
+
     this.context.restore()
   },
   
