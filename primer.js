@@ -2,18 +2,14 @@ Primer = function(container, width, height) {
   this.container = container
   this.width = width
   this.height = height
+  this.primer = this
   
   this.actions = []
-
-  this.primer = this
-  this.x = 0
-  this.y = 0
-  this.globalX = 0
-  this.globalY = 0
   
   this.init()
-
+  
   this.autoDraw = true
+  
 }
 
 Primer.prototype = {
@@ -27,9 +23,13 @@ Primer.prototype = {
     tel.css("position", "relative")
     this.element = tel
     
-    el.append('<canvas width="' + this.width + '" height="' + this.height + '" style="z-index: 1;"></canvas>')
     var jelc = $('canvas', el)
+    if (jelc.length == 0) {
+      el.append('<canvas width="' + this.width + '" height="' + this.height + '" style="z-index: 1;"></canvas>')
+    }
+    jelc = $('canvas', el)
     var elc = jelc[0]
+    
     this.context = elc.getContext('2d')
     
     this.root = new Primer.Layer()
@@ -48,25 +48,21 @@ Primer.prototype = {
     
   },
   
-  // get primer() {
-  //   return this
-  // },
-  // 
-  // get x() {
-  //   return 0
-  // },
-  // 
-  // get y() {
-  //   return 0
-  // },
-  // 
-  // get globalX() {
-  //   return 0
-  // },
-  // 
-  // get globalY() {
-  //   return 0
-  // },
+  getX: function() {
+    return 0
+  },
+  
+  getY: function() {
+    return 0
+  },
+  
+  getGlobalX: function() {
+    return 0
+  },
+  
+  getGlobalY: function() {
+    return 0
+  },
   
   addChild: function(child) {
     child.bind(this)
@@ -107,6 +103,8 @@ Primer.prototype = {
 
 Primer.Layer = function() {
   this.primer = null
+  this.context = null
+  this.element = null
   
   this.children = []
   this.calls = []
@@ -126,103 +124,54 @@ Primer.Layer.prototype = {
   bind: function(parent) {
     this.parent = parent
     this.primer = parent.primer
+    this.context = this.primer.context
+    this.element = this.primer.element
     
     for(var i in this.children) {
       this.children[i].bind(this)
     }
   },
   
-  getContext: function() {
-    return this.primer.context
-  },
-
-  getElement: function() {
-    return this.primer.element
-  },
-  
-  // get context() {
-  //   return this.primer.context
-  // },
-
-  // get element() {
-  //   return this.primer.element
-  // },
-  
   /* x and y getters and setters */
-
-  getX: function(){
+  
+  getX: function() {
     return this.xVal
   },
   
-  setX: function(xVal){
+  setX: function(xVal) {
     this.xVal = xVal
     if(this.primer) this.primer.draw()
   },
-
-  getY: function(){
+  
+  getY: function() {
     return this.yVal
   },
   
-  setY: function(xVal){
+  setY: function(yVal) {
     this.yVal = yVal
     if(this.primer) this.primer.draw()
   },
   
-  // get x() {
-  //   return this.xVal
-  // },
-  // 
-  // set x(xVal) {
-  //   this.xVal = xVal
-  //   if(this.primer) this.primer.draw()
-  // },
-  // 
-  // get y() {
-  //   return this.yVal
-  // },
-  // 
-  // set y(yVal) {
-  //   this.yVal = yVal
-  //   if(this.primer) this.primer.draw()
-  // },
-  
   /* global x and y getters */
-
-  getGlobalX: function(){
-    return this.getX() + this.parent.globalX
+  
+  getGlobalX: function() {
+    return this.getX() + this.parent.getGlobalX()
   },
-
-  getGlobalY: function(){
-    return this.getY() + this.parent.globalY
+  
+  getGlobalY: function() {
+    return this.getY() + this.parent.getGlobalY()
   },
-
-  // get globalX() {
-  //   return this.getX() + this.parent.globalX
-  // },
-  // 
-  // get globalY() {
-  //   return this.getY() + this.parent.globalY
-  // },
   
   /* visibility getter/setter */
-
-  getVisible: function(){
+  
+  getVisible: function() {
     return this.visibleVal
   },
-
-  setVisible: function(visibleVal){
+  
+  setVisible: function(visibleVal) {
     this.visibleVal = visibleVal
     if(this.primer) this.primer.draw()
   },
-
-  // get visible() {
-  //   return this.visibleVal
-  // },
-  // 
-  // set visible(visibleVal) {
-  //   this.visibleVal = visibleVal
-  //   if(this.primer) this.primer.draw()
-  // },
   
   /* children */
   
@@ -254,30 +203,18 @@ Primer.Layer.prototype = {
   },
   
   /* canvas api */
-
-  setFillStyle: function(a){
+  
+  setFillStyle: function(a) {
     this.calls.push(["fillStyle", a])
   },
-
-  setStrokeStyle: function(a){
+  
+  setStrokeStyle: function(a) {
     this.calls.push(["strokeStyle", a])
   },
-
-  setLineWidth: function(a){
+  
+  setLineWidth: function(a) {
     this.calls.push(["lineWidth", a])
   },
-
-  // set fillStyle(a) {
-  //   this.calls.push(["fillStyle", a])
-  // },
-  // 
-  // set strokeStyle(a) {
-  //   this.calls.push(["strokeStyle", a])
-  // },
-  // 
-  // set lineWidth(a) {
-  //   this.calls.push(["lineWidth", a])
-  // },
   
   beginPath: function() {
     this.calls.push(["beginPath"])
@@ -314,22 +251,14 @@ Primer.Layer.prototype = {
   fillText: function(a, b, c, d) {
     this.calls.push(["fillText", a, b, c, d])
   },
-
-  setTextAlign: function(a){
+  
+  setTextAlign: function(a) {
     this.calls.push(["textAlign", a])
   },
-
-  setFont: function(a){
+  
+  setFont: function(a) {
     this.calls.push(["font", a])
   },
-
-  // set textAlign(a) {
-  //   this.calls.push(["textAlign", a])
-  // },
-  // 
-  // set font(a) {
-  //   this.calls.push(["font", a])
-  // },
   
   /* meta canvas api */
   
@@ -365,28 +294,28 @@ Primer.Layer.prototype = {
   draw: function() {
     if(!this.getVisible()) { return }
     
-    this.getContext().save()
-    this.getContext().translate(this.getX(), this.getY())
+    this.context.save()
+    this.context.translate(this.getX(), this.getY())
     
     for(var i in this.calls) {
       var call = this.calls[i]
       
       switch(call[0]) {
-        case "strokeStyle":      this.getContext().strokeStyle = call[1]; break
-        case "lineWidth":        this.getContext().lineWidth = call[1]; break
-        case "fillStyle":        this.getContext().fillStyle = call[1]; break
-        case "fillRect":         this.getContext().fillRect(call[1], call[2], call[3], call[4]); break
-        case "beginPath":        this.getContext().beginPath(); break
-        case "moveTo":           this.getContext().moveTo(call[1], call[2]); break
-        case "lineTo":           this.getContext().lineTo(call[1], call[2]); break
-        case "quadraticCurveTo": this.getContext().quadraticCurveTo(call[1], call[2], call[3], call[4]); break
-        case "arc":              this.getContext().arc(call[1], call[2], call[3], call[4], call[5], call[6]); break
-        case "fill":             this.getContext().fill(); break
-        case "stroke":           this.getContext().stroke(); break
+        case "strokeStyle":      this.context.strokeStyle = call[1]; break
+        case "lineWidth":        this.context.lineWidth = call[1]; break
+        case "fillStyle":        this.context.fillStyle = call[1]; break
+        case "fillRect":         this.context.fillRect(call[1], call[2], call[3], call[4]); break
+        case "beginPath":        this.context.beginPath(); break
+        case "moveTo":           this.context.moveTo(call[1], call[2]); break
+        case "lineTo":           this.context.lineTo(call[1], call[2]); break
+        case "quadraticCurveTo": this.context.quadraticCurveTo(call[1], call[2], call[3], call[4]); break
+        case "arc":              this.context.arc(call[1], call[2], call[3], call[4], call[5], call[6]); break
+        case "fill":             this.context.fill(); break
+        case "stroke":           this.context.stroke(); break
         
         case "fillText":         this.extFillText(call[1], call[2], call[3], call[4]); break
-        case "textAlign":        this.getContext().ext.textAlign = call[1]
-        case "font":             this.getContext().ext.font = call[1]
+        case "textAlign":        this.context.ext.textAlign = call[1]
+        case "font":             this.context.ext.font = call[1]
       }
     }
     
@@ -394,7 +323,7 @@ Primer.Layer.prototype = {
       this.children[i].draw()
     }
     
-    this.getContext().restore()
+    this.context.restore()
   },
   
   /* canvas extensions */
@@ -415,37 +344,37 @@ Primer.Layer.prototype = {
   ghost: function(e) {
     if(!this.getVisible()) { return }
     
-    this.getContext().save()
-    this.getContext().translate(this.getX(), this.getY())
+    this.context.save()
+    this.context.translate(this.getX(), this.getY())
     
     for(var i in this.calls) {
       var call = this.calls[i]
       
       switch(call[0]) {
         case "fillRect":         this.ghostFillRect(e, call[1], call[2], call[3], call[4]); break
-        case "beginPath":        this.getContext().beginPath(); break
-        case "moveTo":           this.getContext().moveTo(call[1], call[2]); break
-        case "lineTo":           this.getContext().lineTo(call[1], call[2]); break
-        case "quadraticCurveTo": this.getContext().quadraticCurveTo(call[1], call[2], call[3], call[4]); break
-        case "arc":              this.getContext().arc(call[1], call[2], call[3], call[4], call[5], call[6]); break
+        case "beginPath":        this.context.beginPath(); break
+        case "moveTo":           this.context.moveTo(call[1], call[2]); break
+        case "lineTo":           this.context.lineTo(call[1], call[2]); break
+        case "quadraticCurveTo": this.context.quadraticCurveTo(call[1], call[2], call[3], call[4]); break
+        case "arc":              this.context.arc(call[1], call[2], call[3], call[4], call[5], call[6]); break
         case "fill":             this.ghostFill(e); break
       }
     }
-    
+
     if (!jQuery.browser.safari) {
-      e.localX -= this.x
-      e.localY -= this.y
+      e.localX -= this.getX()
+      e.localY -= this.getY()
     }
-    
+
     for(var i in this.children) {
       this.children[i].ghost(e)
     }
-    
+
     if (!jQuery.browser.safari) {
-      e.localX += this.x
-      e.localY += this.y
+      e.localX += this.getX()
+      e.localY += this.getY()
     }
-    
+
     this.context.restore()
   },
   
@@ -458,7 +387,7 @@ Primer.Layer.prototype = {
       testY = e.localY
     }
     
-    if(this.getContext().isPointInPath(testX, testY)) {
+    if(this.context.isPointInPath(testX, testY)) {
       if(!this.mouseWithin) {
         this.primer.actions.push([this.mouseoverVal, e])
       }
@@ -474,12 +403,12 @@ Primer.Layer.prototype = {
   },
   
   ghostFillRect: function(e, x, y, w, h) {
-    this.getContext().beginPath()
-    this.getContext().moveTo(x, y)
-    this.getContext().lineTo(x + w, y)
-    this.getContext().lineTo(x + w, y + h)
-    this.getContext().lineTo(x, y + h)
-    this.getContext().lineTo(x, y)
+    this.context.beginPath()
+    this.context.moveTo(x, y)
+    this.context.lineTo(x + w, y)
+    this.context.lineTo(x + w, y + h)
+    this.context.lineTo(x, y + h)
+    this.context.lineTo(x, y)
     
     // console.log([e.localX, e.localY])
     
