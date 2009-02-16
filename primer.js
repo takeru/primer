@@ -333,9 +333,9 @@ Primer.Layer.prototype = {
     styles += 'left: ' + (this.getGlobalX() + x) + 'px;'
     styles += 'top: ' + (this.getGlobalY() + y) + 'px;'
     styles += 'width: ' + width + 'px;'
-    // styles += 'text-align: ' + this.context.ext.textAlign + ';'
-    // styles += 'color: ' + this.context.fillStyle + ';'
-    // styles += 'font: ' + this.context.ext.font + ';'
+    styles += 'text-align: ' + this.context.ext.textAlign + ';'
+    styles += 'color: ' + this.context.fillStyle + ';'
+    styles += 'font: ' + this.context.ext.font + ';'
     this.element.append('<p class="primer_text" style="' + styles + '">' + text + '</p>')
   },
   
