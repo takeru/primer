@@ -12,6 +12,8 @@ Primer = function(container, width, height) {
   this.globalY = 0
   
   this.init()
+
+  this.autoDraw = true
 }
 
 Primer.prototype = {
@@ -36,12 +38,14 @@ Primer.prototype = {
     this.setupExt()
     
     var self = this
-    jelc.eq(0).mousemove(function(e) {
-      var bounds = e.currentTarget.getBoundingClientRect()
-      e.localX = e.clientX - bounds.left
-      e.localY = e.clientY - bounds.top
+    
+    jelc.eq(0).bind("mousemove", function(e){
+      var bounds = $(e.currentTarget).offset()
+      e.localX = e.pageX - bounds.left
+      e.localY = e.pageY - bounds.top
       self.ghost(e)
     })
+    
   },
   
   // get primer() {
@@ -75,11 +79,13 @@ Primer.prototype = {
     this.draw()
   },
   
-  draw: function() {
-    this.context.clearRect(0, 0, this.width, this.height)
-    $(".primer_text", this.element).remove()
-    this.setupExt()
-    this.root.draw()
+  draw: function(forceDraw) {
+    if (forceDraw || this.autoDraw) {
+      this.context.clearRect(0, 0, this.width, this.height)
+      $(".primer_text", this.element).remove()
+      this.setupExt()
+      this.root.draw()
+    }
   },
   
   ghost: function(e) {
@@ -398,10 +404,10 @@ Primer.Layer.prototype = {
     styles += 'left: ' + (this.getGlobalX() + x) + 'px;'
     styles += 'top: ' + (this.getGlobalY() + y) + 'px;'
     styles += 'width: ' + width + 'px;'
-    styles += 'text-align: ' + this.getContext().ext.textAlign + ';'
-    styles += 'color: ' + this.getContext().fillStyle + ';'
-    styles += 'font: ' + this.getContext().ext.font + ';'
-    this.getElement().append('<p class="primer_text" style="' + styles + '">' + text + '</p>')
+    // styles += 'text-align: ' + this.context.ext.textAlign + ';'
+    // styles += 'color: ' + this.context.fillStyle + ';'
+    // styles += 'font: ' + this.context.ext.font + ';'
+    this.element.append('<p class="primer_text" style="' + styles + '">' + text + '</p>')
   },
   
   /* ghost */
@@ -426,15 +432,21 @@ Primer.Layer.prototype = {
       }
     }
     
+    if (!jQuery.browser.safari) {
+      e.localX -= this.x
+      e.localY -= this.y
+    }
+    
     for(var i in this.children) {
-      if (!jQuery.browser.safari) {
-        e.localX -= this.getX()
-        e.localY -= this.getY()
-      }
       this.children[i].ghost(e)
     }
     
-    this.getContext().restore()
+    if (!jQuery.browser.safari) {
+      e.localX += this.x
+      e.localY += this.y
+    }
+    
+    this.context.restore()
   },
   
   ghostDetect: function(e) {
