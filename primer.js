@@ -1,7 +1,9 @@
-Primer = function(container, width, height) {
+Primer = function(container, width, height, useGlobalMouseMove) {
   this.container = container
   this.width = width
   this.height = height
+  this.primer = this
+  this.useGlobalMouseMove = useGlobalMouseMove
   
   this.actions = []
   
@@ -33,12 +35,26 @@ Primer.prototype = {
     
     var self = this
     
-    jelc.eq(0).bind("mousemove", function(e){
-      var bounds = $(e.currentTarget).offset()
-      e.localX = e.pageX - bounds.left
-      e.localY = e.pageY - bounds.top
-      self.ghost(e)
-    })
+    if (this.useGlobalMouseMove) {
+      $('body').bind("mousemove", function(e) {
+        if (e.target == elc) {
+          var $target = $(e.target);
+          var bounds = $target.offset()
+          e.localX = e.pageX - bounds.left
+          e.localY = e.pageY - bounds.top
+          self.ghost(e)
+        } else {
+          self.outOfBounds();
+        }
+      })
+    } else {
+      jelc.eq(0).bind("mousemove", function(e){
+        var bounds = $(e.currentTarget).offset()
+        e.localX = e.pageX - bounds.left
+        e.localY = e.pageY - bounds.top
+        self.ghost(e)
+      })
+    }
     
   },
   
@@ -91,6 +107,10 @@ Primer.prototype = {
     this.actions = []
   },
   
+  outOfBounds: function() {
+    // Do nothing by default
+  },
+
   setupExt: function() {
     this.context.ext = {
       textAlign: "left",
