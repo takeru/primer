@@ -8,8 +8,9 @@ Primer = function(container, width, height, useGlobalMouseMove) {
   this.actions = []
   
   this.init()
-
+  
   this.autoDraw = true
+  
 }
 
 Primer.prototype = {
@@ -23,9 +24,13 @@ Primer.prototype = {
     tel.css("position", "relative")
     this.element = tel
     
-    el.append('<canvas width="' + this.width + '" height="' + this.height + '" style="z-index: 1;"></canvas>')
     var jelc = $('canvas', el)
+    if (jelc.length == 0) {
+      el.append('<canvas width="' + this.width + '" height="' + this.height + '" style="z-index: 1;"></canvas>')
+    }
+    jelc = $('canvas', el)
     var elc = jelc[0]
+    
     this.context = elc.getContext('2d')
     
     this.root = new Primer.Layer()
@@ -58,23 +63,19 @@ Primer.prototype = {
     
   },
   
-  get primer() {
-    return this
-  },
-  
-  get x() {
+  getX: function() {
     return 0
   },
   
-  get y() {
+  getY: function() {
     return 0
   },
   
-  get globalX() {
+  getGlobalX: function() {
     return 0
   },
   
-  get globalY() {
+  getGlobalY: function() {
     return 0
   },
   
@@ -121,6 +122,8 @@ Primer.prototype = {
 
 Primer.Layer = function() {
   this.primer = null
+  this.context = null
+  this.element = null
   
   this.children = []
   this.calls = []
@@ -140,57 +143,51 @@ Primer.Layer.prototype = {
   bind: function(parent) {
     this.parent = parent
     this.primer = parent.primer
+    this.context = this.primer.context
+    this.element = this.primer.element
     
     for(var i in this.children) {
       this.children[i].bind(this)
     }
   },
   
-  get context() {
-    return this.primer.context
-  },
-  
-  get element() {
-    return this.primer.element
-  },
-  
   /* x and y getters and setters */
   
-  get x() {
+  getX: function() {
     return this.xVal
   },
   
-  set x(xVal) {
+  setX: function(xVal) {
     this.xVal = xVal
     if(this.primer) this.primer.draw()
   },
   
-  get y() {
+  getY: function() {
     return this.yVal
   },
   
-  set y(yVal) {
+  setY: function(yVal) {
     this.yVal = yVal
     if(this.primer) this.primer.draw()
   },
   
   /* global x and y getters */
   
-  get globalX() {
-    return this.x + this.parent.globalX
+  getGlobalX: function() {
+    return this.getX() + this.parent.getGlobalX()
   },
   
-  get globalY() {
-    return this.y + this.parent.globalY
+  getGlobalY: function() {
+    return this.getY() + this.parent.getGlobalY()
   },
   
   /* visibility getter/setter */
   
-  get visible() {
+  getVisible: function() {
     return this.visibleVal
   },
   
-  set visible(visibleVal) {
+  setVisible: function(visibleVal) {
     this.visibleVal = visibleVal
     if(this.primer) this.primer.draw()
   },
@@ -226,15 +223,15 @@ Primer.Layer.prototype = {
   
   /* canvas api */
   
-  set fillStyle(a) {
+  setFillStyle: function(a) {
     this.calls.push(["fillStyle", a])
   },
   
-  set strokeStyle(a) {
+  setStrokeStyle: function(a) {
     this.calls.push(["strokeStyle", a])
   },
-
-  set lineWidth(a) {
+  
+  setLineWidth: function(a) {
     this.calls.push(["lineWidth", a])
   },
   
@@ -274,11 +271,11 @@ Primer.Layer.prototype = {
     this.calls.push(["fillText", a, b, c, d])
   },
   
-  set textAlign(a) {
+  setTextAlign: function(a) {
     this.calls.push(["textAlign", a])
   },
   
-  set font(a) {
+  setFont: function(a) {
     this.calls.push(["font", a])
   },
   
@@ -314,10 +311,10 @@ Primer.Layer.prototype = {
   /* draw */
   
   draw: function() {
-    if(!this.visible) { return }
+    if(!this.getVisible()) { return }
     
     this.context.save()
-    this.context.translate(this.x, this.y)
+    this.context.translate(this.getX(), this.getY())
     
     for(var i in this.calls) {
       var call = this.calls[i]
@@ -352,22 +349,22 @@ Primer.Layer.prototype = {
   
   extFillText: function(text, x, y, width) {
     var styles = ''
-    styles += 'left: ' + (this.globalX + x) + 'px;'
-    styles += 'top: ' + (this.globalY + y) + 'px;'
+    styles += 'left: ' + (this.getGlobalX() + x) + 'px;'
+    styles += 'top: ' + (this.getGlobalY() + y) + 'px;'
     styles += 'width: ' + width + 'px;'
-    // styles += 'text-align: ' + this.context.ext.textAlign + ';'
-    // styles += 'color: ' + this.context.fillStyle + ';'
-    // styles += 'font: ' + this.context.ext.font + ';'
+    styles += 'text-align: ' + this.context.ext.textAlign + ';'
+    styles += 'color: ' + this.context.fillStyle + ';'
+    styles += 'font: ' + this.context.ext.font + ';'
     this.element.append('<p class="primer_text" style="' + styles + '">' + text + '</p>')
   },
   
   /* ghost */
   
   ghost: function(e) {
-    if(!this.visible) { return }
+    if(!this.getVisible()) { return }
     
     this.context.save()
-    this.context.translate(this.x, this.y)
+    this.context.translate(this.getX(), this.getY())
     
     for(var i in this.calls) {
       var call = this.calls[i]
@@ -384,8 +381,8 @@ Primer.Layer.prototype = {
     }
 
     if (!jQuery.browser.safari) {
-      e.localX -= this.x
-      e.localY -= this.y
+      e.localX -= this.getX()
+      e.localY -= this.getY()
     }
 
     for(var i in this.children) {
@@ -393,8 +390,8 @@ Primer.Layer.prototype = {
     }
 
     if (!jQuery.browser.safari) {
-      e.localX += this.x
-      e.localY += this.y
+      e.localX += this.getX()
+      e.localY += this.getY()
     }
 
     this.context.restore()
@@ -402,8 +399,8 @@ Primer.Layer.prototype = {
   
   ghostDetect: function(e) {
     if (!jQuery.browser.safari) {
-      testX = e.localX - this.x
-      testY = e.localY - this.y
+      testX = e.localX - this.getX()
+      testY = e.localY - this.getY()
     } else {
       testX = e.localX
       testY = e.localY

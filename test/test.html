@@ -5,6 +5,7 @@
   <head>
     <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
     <title>Primer Test</title>
+    <script src="./excanvas.js" type="text/javascript"></script>
     <script src="./jquery-1.2.6.min.js" type="text/javascript"></script>
     <script src="../primer.js" type="text/javascript"></script>
     <script type="text/javascript">
@@ -12,41 +13,41 @@
         // var el = $('#p1').get(0)
         var el = "#p1"
         
-        p1 = new Primer(el, 300, 300)
+        var p1 = new Primer(el, 300, 300)
         
         var hold = new Primer.Layer()
         hold.fillRect(0, 0, 2, 2)
-        hold.x = 20
-        hold.y = 20
+        hold.setX(20)
+        hold.setY(20)
         p1.addChild(hold)
         
         var box = new Primer.Layer()
         box.fillRect(0, 0, 10, 10)
-        box.visible = false
+        box.setVisible(false)
         
         p1.addChild(box)
         
         var square = new Primer.Layer()
-        square.strokeStyle = "#00FF00"
-        square.fillStyle = "#FF0000"
+        square.setStrokeStyle("#00FF00")
+        square.setFillStyle("#FF0000")
         square.beginPath()
         square.moveTo(0, 0)
         square.lineTo(20, 0)
         square.lineTo(0, 20)
         square.fill()
         
-        square.x = 50
-        square.y = 50
+        square.setX(50)
+        square.setY(50)
         
         hold.addChild(square)
         
         
         square.mouseover(function() {
-          box.visible = true
+          box.setVisible(true)
         })
         
         square.mouseout(function() {
-          box.visible = false
+          box.setVisible(false)
         })
         
         function go() {
@@ -60,6 +61,6 @@
   </head>
   <body>
     <p>Testing</p>
-    <div id="p1"></div>
+    <div id="p1"><canvas width="300" height="300" style="z-index: 1;"></canvas></div>
   </body>
 </html>
