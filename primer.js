@@ -267,8 +267,8 @@ Primer.Layer.prototype = {
     this.calls.push(["fillRect", a, b, c, d])
   },
   
-  fillText: function(a, b, c, d) {
-    this.calls.push(["fillText", a, b, c, d])
+  fillText: function(a, b, c, d, e) {
+    this.calls.push(["fillText", a, b, c, d, e])
   },
   
   setTextAlign: function(a) {
@@ -332,7 +332,7 @@ Primer.Layer.prototype = {
         case "fill":             this.context.fill(); break
         case "stroke":           this.context.stroke(); break
         
-        case "fillText":         this.extFillText(call[1], call[2], call[3], call[4]); break
+        case "fillText":         this.extFillText(call[1], call[2], call[3], call[4], call[5]); break
         case "textAlign":        this.context.ext.textAlign = call[1]
         case "font":             this.context.ext.font = call[1]
       }
@@ -347,7 +347,7 @@ Primer.Layer.prototype = {
   
   /* canvas extensions */
   
-  extFillText: function(text, x, y, width) {
+  extFillText: function(text, x, y, width, className) {
     var styles = ''
     styles += 'left: ' + (this.getGlobalX() + x) + 'px;'
     styles += 'top: ' + (this.getGlobalY() + y) + 'px;'
@@ -355,7 +355,7 @@ Primer.Layer.prototype = {
     styles += 'text-align: ' + this.context.ext.textAlign + ';'
     styles += 'color: ' + this.context.fillStyle + ';'
     styles += 'font: ' + this.context.ext.font + ';'
-    this.element.append('<p class="primer_text" style="' + styles + '">' + text + '</p>')
+    this.element.append('<p class="primer_text ' + className + '" style="' + styles + '">' + text + '</p>')
   },
   
   /* ghost */
