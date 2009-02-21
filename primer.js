@@ -42,8 +42,8 @@ Primer.prototype = {
     
     if (this.useGlobalMouseMove) {
       $('body').bind("mousemove", function(e) {
-        if (e.target == elc) {
-          var $target = $(e.target);
+        if (e.target == elc || $(e.target).parents().filter('#primer_text')[0] == tel[0]) {
+          var $target = $(elc);
           var bounds = $target.offset()
           e.localX = e.pageX - bounds.left
           e.localY = e.pageY - bounds.top
