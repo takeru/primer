@@ -24,13 +24,17 @@ Primer.prototype = {
     tel.css("position", "relative")
     this.element = tel
     
-    var jelc = $('canvas', el)
-    if (jelc.length == 0) {
-      el.append('<canvas width="' + this.width + '" height="' + this.height + '" style="z-index: 1;"></canvas>')
+    var canvas = document.createElement('canvas')
+    canvas.width = this.width
+    canvas.height = this.height
+    canvas.style.zIndex= '0'
+    if (canvas.getContext) {
+      el.append(canvas);
+    } else {
+      window.G_vmlCanvasManager.initElement( $(canvas).appendTo(el).get(0) )
     }
-    jelc = $('canvas', el)
+    var jelc = $('canvas', el)
     var elc = jelc[0]
-    
     this.context = elc.getContext('2d')
     
     this.root = new Primer.Layer()
@@ -42,8 +46,8 @@ Primer.prototype = {
     
     if (this.useGlobalMouseMove) {
       $('body').bind("mousemove", function(e) {
-        if (e.target == elc || $(e.target).parents().filter('#primer_text')[0] == tel[0]) {
-          var $target = $(elc);
+        if ($(e.target).parents().find(this.container)) {
+          var $target = $(elc)
           var bounds = $target.offset()
           e.localX = e.pageX - bounds.left
           e.localY = e.pageY - bounds.top
