@@ -31,7 +31,10 @@ Primer.prototype = {
     if (canvas.getContext) {
       el.append(canvas);
     } else {
-      window.G_vmlCanvasManager.initElement( $(canvas).appendTo(el).get(0) )
+      // if ExplorerCanvas (adds canvas support to IE) is available, use its G_vmlCanvasManager to initialize the canvas element.
+      if (window.G_vmlCanvasManager) {
+        window.G_vmlCanvasManager.initElement( $(canvas).appendTo(el).get(0) )
+      }
     }
     var jelc = $('canvas', el)
     var elc = jelc[0]
