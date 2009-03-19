@@ -346,7 +346,9 @@ Primer.Layer.prototype = {
     }
     
     for(var i in this.children) {
-      this.children[i].draw()
+      if (this.children[i].draw) {
+        this.children[i].draw()
+      }
     }
     
     this.context.restore()
