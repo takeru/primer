@@ -1,0 +1,108 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+    <title>Primer Test</title>
+    <script type="text/javascript" src="../prototype-1.6.0.3.js"></script>
+    <script type="text/javascript" src="../jquery-1.3.2.js"     ></script>
+    <script type="text/javascript">
+      jQuery.noConflict()
+      $j = jQuery
+      $p = $
+    </script>
+    <script type="text/javascript" src="../excanvas.js"         ></script>
+    <script type="text/javascript" src="../primer.js"           ></script>
+
+    <script type="text/javascript">
+      jQuery(function() {
+        var p1 = new Primer({container:"#div1", width:300, height:200})
+
+        //----------------------------------
+        var blue = new Primer.Layer()
+        blue.setXY(40,40)
+        blue.draw = function(ctx){
+          ctx.fillStyle = "#0000FF"
+          ctx.fillRect(0, 0, 20, 20)
+        }
+        p1.root.addChild(blue)
+
+        //----------------------------------
+        var green = new Primer.Layer()
+        green.fillStyle = "#008800"
+        green.setXY(10,60)
+        green.draw = function(ctx){
+          ctx.fillStyle = this.fillStyle
+          ctx.fillRect(0, 0, 5+blue.y/2, 10+orange.x/10)
+        }
+        p1.root.addChild(green)
+
+        //----------------------------------
+        var black = new Primer.Layer()
+        black.setXY(5,5)
+        black.visible = false
+        black.draw = function(ctx){
+          ctx.fillStyle = "#000000"
+          ctx.fillRect(0, 0, 30, 10+blue.y)
+          ctx.strokeRect(0, 0, 10+blue.y, 30)
+        }
+        p1.root.addChild(black)
+
+        //----------------------------------
+        var orange = new Primer.Layer()
+        orange.setXY(30,0)
+        orange.fillStyle = "#FF8800"
+        orange.draw = function(ctx){
+          ctx.lineWidth = 4
+          ctx.strokeStyle = "#00FF00"
+          ctx.fillStyle = this.fillStyle
+          ctx.beginPath()
+          ctx.moveTo( 0,  0)
+          ctx.lineTo(40,  0)
+          ctx.lineTo( 0, 40)
+          ctx.fill()
+          ctx.stroke()
+        }
+        orange.mouseover(function(){
+          black.visible = true
+          orange.fillStyle = "#FF4400"
+          green.fillStyle  = "#00FF00"
+          p1.redraw()
+//console.log("green.calls=", green.calls.length)
+        })
+        orange.mouseout(function(){
+          black.visible = false
+          orange.fillStyle = "#FF8800"
+          green.fillStyle  = "#008800"
+          p1.redraw()
+        })
+        blue.addChild(orange)
+
+        //----------------------------------
+        var dx = 1;
+        var dy = 1;
+        function go() {
+          orange.x += dx
+          if(orange.x<=-30){ dx = +1; }
+          if(200<=orange.x){ dx = -2; }
+
+          blue.y += dy
+          if(blue.y<=0){  dy = +1; }
+          if(30<=blue.y){ dy = -2; }
+
+          p1.redraw();
+        }
+
+        setInterval(go, 50)
+        p1.redraw();
+      })
+    </script>
+  </head>
+
+  <body>
+    <p>Testing</p>
+    <div style="border:1px gray solid">
+      <div id="div1"></div>
+    </div>
+  </body>
+</html>
