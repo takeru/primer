@@ -8,7 +8,6 @@ function definePrimer($) {
       this.useGlobalMouseMove = opts.useGlobalMouseMove
       this.debug              = opts.debug
       this.context            = null
-      this.actions            = []
       this.width              = $(this.container).width()
       this.height             = $(this.container).height()
 
@@ -22,7 +21,7 @@ function definePrimer($) {
       canvas_el.height   = this.height
       canvas_el.style.position = 'absolute'
       if(this.debug){
-        canvas_el.style.border   = '5px blue solid'
+        canvas_el.style.border   = '0.1px blue solid'
       }
       if (canvas_el.getContext) {
         container.append(canvas_el);
@@ -42,7 +41,7 @@ function definePrimer($) {
       text_layer_el.style.position = 'absolute'
       text_layer_el.style.overflow = "hidden"
       if(this.debug){
-        text_layer_el.style.border   = '2px red solid'
+        text_layer_el.style.border   = '0.1px red solid'
       }
       text_layer_el.style.width    = this.width+"px"
       text_layer_el.style.height   = this.height+"px"
@@ -55,36 +54,21 @@ function definePrimer($) {
         var bounds = $(e.currentTarget).offset()
         e.localX = e.pageX - bounds.left
         e.localY = e.pageY - bounds.top
-        _this.onMouseMove(e)
+        _this.root.onMouseMove(_this, e)
       })
       this.context.text_layer.bind("click", function(e){
         var bounds = $(e.currentTarget).offset()
         e.localX = e.pageX - bounds.left
         e.localY = e.pageY - bounds.top
-        _this.onClick(e)
+        _this.root.onClick(_this, e)
       })
     },
 
     redraw: function() {
+//log("redraw---------------------")
       this.context.clearRect(0, 0, this.width, this.height)
       this.context.resetTextLayer()
       this.root._draw(this)
-    },
-
-    onMouseMove: function(e) {
-      this.root.onMouseMove(this, e)
-      this.actions.each(function(action){
-        action[0](action[1])
-      })
-      this.actions = []
-    },
-
-    onClick: function(e) {
-      this.root.onClick(this, e)
-      this.actions.each(function(action){
-        action[0](action[1])
-      })
-      this.actions = []
     },
 
     outOfBounds: function() {
@@ -96,6 +80,7 @@ function definePrimer($) {
       Object.extend(this.context, {
         initExt: function(){
           this.stateStack = [{x:0, y:0}]
+          this.hitDetect = false;
         },
 
         fillText: function(text, x, y, width, className) {
@@ -151,23 +136,112 @@ function definePrimer($) {
         currentState: function(){
           return this.stateStack[0]
         },
+
+        orig_fillRect: this.context.fillRect,
+        fillRect: function(x, y, w, h, hitKey){
+          if(!this.hitDetect){
+            this.orig_fillRect(x, y, w, h)
+          }else{
+            //log(this.hitDetect, this.hitDetect.e, arguments)
+            //log("localXY", this.hitDetect.e.localX, this.hitDetect.e.localY)
+            //log("testXY", testX, testY)
+            //log("cs", cs)
+            this.beginPath()
+            this.moveTo(x  , y  )
+            this.lineTo(x+w, y  )
+            this.lineTo(x+w, y+h)
+            this.lineTo(x  , y+h)
+            this.lineTo(x  , y  )
+            this.testHit()
+          }
+        },
+
+        orig_fill: this.context.fill,
+        fill: function(hitKey){
+          if(!this.hitDetect){
+            this.orig_fill()
+          }else{
+            this.testHit()
+          }
+        },
+
+        orig_stroke: this.context.stroke,
+        stroke: function(hitKey){
+          if(!this.hitDetect){
+            this.orig_stroke()
+          }
+        },
+
+        testHit: function() {
+          var cs = this.currentState()
+          var testX = this.hitDetect.e.localX-cs.x
+          var testY = this.hitDetect.e.localY-cs.y
+          if(this.isPointInPath(testX, testY)) {
+            this.hitDetect.hit = true
+          }
+        },
+
+
+
+/*
+          case "fillRect":         _this._hitDetect_fillRect(primer, e, call[1], call[2], call[3], call[4]); break
+          case "fill":             _this._hitDetect_fill(primer, e); break
+        _hitDetect_detect: function(primer, e) {
+          if (!jQuery.browser.safari) {
+            testX = e.localX - this.x
+            testY = e.localY - this.y
+          } else {
+            testX = e.localX
+            testY = e.localY
+          }
+          if(primer.context.isPointInPath(testX, testY)) {
+            if(!this.mouseWithin) {
+              primer.actions.push([this.mouseoverVal, e])
+            }
+            this.mouseWithin = true
+          } else {
+            if(this.mouseWithin) {
+              primer.actions.push([this.mouseoutVal, e])
+            }
+            this.mouseWithin = false
+          }
+        },
+
+        _hitDetect_fillRect: function(primer, e, x, y, w, h) {
+          primer.context.beginPath()
+          primer.context.moveTo(x  , y  )
+          primer.context.lineTo(x+w, y  )
+          primer.context.lineTo(x+w, y+h)
+          primer.context.lineTo(x  , y+h)
+          primer.context.lineTo(x  , y  )
+          this._hitDetect_detect(primer, e)
+        },
+
+        _hitDetect_fill: function(primer, e) {
+          this._hitDetect_detect(primer, e)
+        }
+*/
       })
       this.context.initExt()
     },
   }) // class Primer
 
   Primer.Layer = Class.create({
-    initialize : function(){
-      this.draw = null
-      this.children = []
-      this.calls = []
+    initialize : function(init){
+      this.name = "none"
       this.x = 0
       this.y = 0
       this.visible = true
-      this.mouseoverVal = function() { }
-      this.mouseoutVal = function() { }
+      this.draw = null
+      if(init){
+        Object.extend(this, init)
+      }
 
-      this.mouseWithin = false
+      this.parent = null
+      this.children = []
+      //this.mouseoverVal = function() { }
+      //this.mouseoutVal = function() { }
+      //this.mouseWithin = false
     },
 
     setXY : function(x, y){
@@ -184,7 +258,16 @@ function definePrimer($) {
     },
 
     /* children */
+    createChild: function(init){
+      var child = new Primer.Layer(init)
+      this.addChild(child)
+      return child
+    },
     addChild: function(child) {
+      if(child.parent){
+        child.parent.removeChild(child)
+      }
+      child.parent = this
       this.children.push(child)
     },
     removeChild: function(child) {
@@ -195,6 +278,7 @@ function definePrimer($) {
         }
       })
       this.children = newChildren
+      child.parent = null
     },
 
     /* events */
@@ -205,40 +289,7 @@ function definePrimer($) {
       this.mouseoutVal = fn
     },
 
-    /* canvas api */
-    setFillStyle: function(a) {
-      this.calls.push(["fillStyle", a])
-    },
-    setStrokeStyle: function(a) {
-      this.calls.push(["strokeStyle", a])
-    },
-    setLineWidth: function(a) {
-      this.calls.push(["lineWidth", a])
-    },
-    beginPath: function() {
-      this.calls.push(["beginPath"])
-    },
-    moveTo: function(a, b) {
-      this.calls.push(["moveTo", a, b])
-    },
-    lineTo: function(a, b) {
-      this.calls.push(["lineTo", a, b])
-    },
-    quadraticCurveTo: function(a, b, c, d) {
-      this.calls.push(["quadraticCurveTo", a, b, c, d])
-    },
-    arc: function(a, b, c, d, e, f) {
-      this.calls.push(["arc", a, b, c, d, e, f])
-    },
-    fill: function() {
-      this.calls.push(["fill"])
-    },
-    stroke: function() {
-      this.calls.push(["stroke"])
-    },
-    fillRect: function(a, b, c, d) {
-      this.calls.push(["fillRect", a, b, c, d])
-    },
+/*
     fillText: function(a, b, c, d, e) {
       this.calls.push(["fillText", a, b, c, d, e])
     },
@@ -248,8 +299,6 @@ function definePrimer($) {
     setFont: function(a) {
       this.calls.push(["font", a])
     },
-
-    /* meta canvas api */
     rect: function(x, y, w, h) {
       this.beginPath()
       this.moveTo(x  , y  )
@@ -274,115 +323,60 @@ function definePrimer($) {
       this.roundedRect(x, y, w, h, rad)
       this.fill()
     },
+*/
 
     /* draw */
     _draw: function(primer) {
       if(!this.visible){ return }
+      primer.context.hitDetect = null
       primer.context.save()
-
       primer.context.translate(this.x, this.y)
 //    primer.context.rotate(10 * Math.PI / 180);
-
-//      var backup_calls = this.calls.concat([])
-      if(this.draw){ this.draw(primer.context) }
-/*
-      this.calls.each(function(call){
-        switch(call[0]) {
-          case "strokeStyle":      primer.context.strokeStyle = call[1]; break
-          case "lineWidth":        primer.context.lineWidth = call[1]; break
-          case "fillStyle":        primer.context.fillStyle = call[1]; break
-          case "fillRect":         primer.context.fillRect(call[1], call[2], call[3], call[4]); break
-          case "beginPath":        primer.context.beginPath(); break
-          case "moveTo":           primer.context.moveTo(call[1], call[2]); break
-          case "lineTo":           primer.context.lineTo(call[1], call[2]); break
-          case "quadraticCurveTo": primer.context.quadraticCurveTo(call[1], call[2], call[3], call[4]); break
-          case "arc":              primer.context.arc(call[1], call[2], call[3], call[4], call[5], call[6]); break
-          case "fill":             primer.context.fill(); break
-          case "stroke":           primer.context.stroke(); break
-          //-----------
-          case "fillText":         primer.extFillText(call[1], call[2], call[3], call[4], call[5]); break
-          case "textAlign":        primer.context.ext.textAlign = call[1]
-          case "font":             primer.context.ext.font = call[1]
-        }
-      })
-      this.calls = backup_calls
-*/
+      if(this.draw){
+        this.draw(primer.context)
+      }
       this.children.each(function(child){
         child._draw(primer)
       })
       primer.context.restore()
     },
 
-    /* onMouseMove */
-    onMouseMove: function(primer, e) {
-      if(!this.visible) { return }
+    /* hit */
+    _hit: function(primer, e) {
+      if(!this.visible) { return [] }
+      var layers = []
+      primer.context.hitDetect = {x:this.x, y:this.y, hit:false, e:e}
       primer.context.save()
       primer.context.translate(this.x, this.y)
-      var backup_calls = this.calls.concat([])
-      if(this.draw){ this.draw(this) }
-      var _this = this
-      this.calls.each(function(call){
-        switch(call[0]){
-          case "fillRect":         _this._hitDetect_fillRect(primer, e, call[1], call[2], call[3], call[4]); break
-          case "beginPath":        primer.context.beginPath(); break
-          case "moveTo":           primer.context.moveTo(call[1], call[2]); break
-          case "lineTo":           primer.context.lineTo(call[1], call[2]); break
-          case "quadraticCurveTo": primer.context.quadraticCurveTo(call[1], call[2], call[3], call[4]); break
-          case "arc":              primer.context.arc(call[1], call[2], call[3], call[4], call[5], call[6]); break
-          case "fill":             _this._hitDetect_fill(primer, e); break
+      if(this.draw){
+        this.draw(primer.context)
+        if(primer.context.hitDetect.hit){
+          layers.push(this)
         }
-      })
-      this.calls = backup_calls
-
-      if (!jQuery.browser.safari) {
-        e.localX -= this.x
-        e.localY -= this.y
       }
       this.children.each(function(child){
-        child.onMouseMove(primer, e)
+        layers = layers.concat(child._hit(primer, e))
       })
-      if (!jQuery.browser.safari) {
-        e.localX += this.x
-        e.localY += this.y
-      }
-
       primer.context.restore()
+      return layers
     },
 
-    _hitDetect_detect: function(primer, e) {
-      if (!jQuery.browser.safari) {
-        testX = e.localX - this.x
-        testY = e.localY - this.y
-      } else {
-        testX = e.localX
-        testY = e.localY
+    /* onMouseMove */
+    onMouseMove: function(primer, e) {
+    },
+
+    /* onClick */
+    onClick: function(primer, e) {
+      if (this.x!=0 || this.y!=0) {
+        log("warn", this.x, this.y)
       }
-      if(primer.context.isPointInPath(testX, testY)) {
-        if(!this.mouseWithin) {
-          primer.actions.push([this.mouseoverVal, e])
-        }
-        this.mouseWithin = true
-      } else {
-        if(this.mouseWithin) {
-          primer.actions.push([this.mouseoutVal, e])
-        }
-        this.mouseWithin = false
-      }
+      var layers = this._hit(primer, e)
+      log("=====================================")
+      log("layers.length", layers.length)
+      layers.each(function(layer){
+        log(layer.name, layer.x, layer.y)
+      })
     },
-
-    _hitDetect_fillRect: function(primer, e, x, y, w, h) {
-      primer.context.beginPath()
-      primer.context.moveTo(x  , y  )
-      primer.context.lineTo(x+w, y  )
-      primer.context.lineTo(x+w, y+h)
-      primer.context.lineTo(x  , y+h)
-      primer.context.lineTo(x  , y  )
-      this._hitDetect_detect(primer, e)
-    },
-
-    _hitDetect_fill: function(primer, e) {
-      this._hitDetect_detect(primer, e)
-    }
   }) // class Primer.Layer
 
   return Primer

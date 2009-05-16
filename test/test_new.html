@@ -18,73 +18,99 @@
       jQuery(function() {
         var p1 = new Primer({container:"#div1", debug:true})
 
-        //----------------------------------
-        var blue = new Primer.Layer()
-        blue.setXY(40,40)
-        blue.draw = function(ctx){
-          ctx.fillStyle = "#0000FF"
-          ctx.fillRect(0, 0, 20, 20)
-        }
-        p1.root.addChild(blue)
-
-        //----------------------------------
-        var green = new Primer.Layer()
-        green.fillStyle = "#008800"
-        green.setXY(10,60)
-        green.draw = function(ctx){
-          ctx.fillStyle = this.fillStyle
-          ctx.fillRect(0, 0, 5+blue.y/2, 10+orange.x/10)
-        }
-        p1.root.addChild(green)
-
-        //----------------------------------
-        var black = new Primer.Layer()
-        black.setXY(5,5)
-        black.visible = false
-        black.draw = function(ctx){
-          ctx.fillStyle = "#000000"
-          ctx.fillRect(0, 0, 30, 10+blue.y)
-          //ctx.strokeRect(0, 0, 10+blue.y, 30)
-        }
-        p1.root.addChild(black)
-
-        //----------------------------------
-        var text = new Primer.Layer()
-        text.setXY(60,60)
-        text.draw = function(ctx){
-          ctx.fillText("hello? 123 456 789 abc def", 0, 0, 50, "")
-        }
-        p1.root.addChild(text)
-
-        //----------------------------------
-        var orange = new Primer.Layer()
-        orange.setXY(30,0)
-        orange.fillStyle = "#FF8800"
-        orange.draw = function(ctx){
-          ctx.lineWidth = 4
-          ctx.strokeStyle = "#00FF00"
-          ctx.fillStyle = this.fillStyle
+        drawZero = function(ctx, color){
+//log("drawZero")
+          ctx.strokeStyle = color
+          ctx.lineWidth = 1
           ctx.beginPath()
-          ctx.moveTo( 0,  0)
-          ctx.lineTo(40,  0)
-          ctx.lineTo( 0, 40)
-          ctx.fill()
+          ctx.moveTo(0, -20)
+          ctx.lineTo(0, +20)
+          ctx.moveTo(-20, 0)
+          ctx.lineTo(+20, 0)
           ctx.stroke()
+ctx.strokeStyle = "#ffffff"
         }
-        orange.mouseover(function(){
-          black.visible = true
-          orange.fillStyle = "#FF4400"
-          green.fillStyle  = "#00FF00"
-          p1.redraw()
-//console.log("green.calls=", green.calls.length)
+
+        //----------------------------------
+        var blue = p1.root.createChild({name:"blue", x:40, y:40,
+          draw: function(ctx){
+            drawZero(ctx, "#0000ff")
+            ctx.fillStyle = "#0000FF"
+            ctx.fillRect(0, 0, 50, 50, "hit=rectBlue")
+          }
         })
-        orange.mouseout(function(){
-          black.visible = false
-          orange.fillStyle = "#FF8800"
-          green.fillStyle  = "#008800"
-          p1.redraw()
+
+        //----------------------------------
+        var red = p1.root.createChild({name:"red", x:70, y:10,
+          draw: function(ctx){
+            drawZero(ctx, "#ff0000")
+            ctx.fillStyle = "#FF0000"
+            ctx.fillRect(10, 10, 30, 50, "hit=rectRed")
+          }
         })
-        blue.addChild(orange)
+
+        //----------------------------------
+        var green = p1.root.createChild({name:"green", x:10, y:60, fillStyle:"#008800",
+          draw: function(ctx){
+            drawZero(ctx, "#008800")
+            ctx.fillStyle = this.fillStyle
+            ctx.fillRect(0, 0, 5+blue.y/2, 10+orange.x/10, "hit=rectGreen")
+          }
+        })
+
+        //----------------------------------
+        var black = p1.root.createChild({name:"black", x:5, y:5, visible:false,
+          draw: function(ctx){
+            ctx.fillStyle = "#000000"
+            ctx.fillRect(0, 0, 30, 10+blue.y, "hit=rectBlack")
+            //ctx.strokeRect(0, 0, 10+blue.y, 30)
+          }
+        })
+
+        //----------------------------------
+        var text = p1.root.createChild({name:"text", x:60, y:60,
+          draw: function(ctx){
+            drawZero(ctx, "#000000")
+            ctx.fillText("hello? 123 456 789 abc def", 20, 20, 50, "", "hit=text")
+          }
+        })
+
+        //----------------------------------
+        var orange = blue.createChild({name:"orange", x:30, y:0, fillStyle:"#FF8800",
+          draw: function(ctx){
+            drawZero(ctx, "#ff8800")
+            ctx.lineWidth = 4
+            ctx.strokeStyle = "#00FF00"
+            ctx.fillStyle = this.fillStyle
+            ctx.beginPath()
+            ctx.moveTo( 0,  0)
+            ctx.lineTo(40,  0)
+            ctx.lineTo( 0, 40)
+            ctx.fill("hit=fillOrange")
+            ctx.stroke()
+          },
+          mouseover: function(){
+            black.visible = true
+            orange.fillStyle = "#FF4400"
+            green.fillStyle  = "#00FF00"
+            p1.redraw()
+          },
+          mouseout: function(){
+            black.visible = false
+            orange.fillStyle = "#FF8800"
+            green.fillStyle  = "#008800"
+            p1.redraw()
+          },
+        })
+
+        //----------------------------------
+        var yellow = orange.createChild({name:"yellow", x:-40, y:80,
+          draw: function(ctx){
+            drawZero(ctx, "#FFFF00")
+            ctx.fillStyle = "#FFFF00"
+            ctx.fillRect(0, 0, 20, 20, "hit=rectYellow")
+          },
+        })
 
         //----------------------------------
         var dx = 1;
@@ -104,7 +130,7 @@
           p1.redraw();
         }
 
-        setInterval(go, 50)
+        setInterval(go, 150)
         p1.redraw();
       })
     </script>
