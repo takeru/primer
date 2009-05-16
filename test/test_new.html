@@ -11,12 +11,12 @@
       $j = jQuery
       $p = $
     </script>
-    <script type="text/javascript" src="../excanvas.js"         ></script>
+    <script type="text/javascript" src="../excanvas_r3.compiled.js"></script>
     <script type="text/javascript" src="../primer.js"           ></script>
 
     <script type="text/javascript">
       jQuery(function() {
-        var p1 = new Primer({container:"#div1", width:300, height:200})
+        var p1 = new Primer({container:"#div1", debug:true})
 
         //----------------------------------
         var blue = new Primer.Layer()
@@ -44,9 +44,17 @@
         black.draw = function(ctx){
           ctx.fillStyle = "#000000"
           ctx.fillRect(0, 0, 30, 10+blue.y)
-          ctx.strokeRect(0, 0, 10+blue.y, 30)
+          //ctx.strokeRect(0, 0, 10+blue.y, 30)
         }
         p1.root.addChild(black)
+
+        //----------------------------------
+        var text = new Primer.Layer()
+        text.setXY(60,60)
+        text.draw = function(ctx){
+          ctx.fillText("hello? 123 456 789 abc def", 0, 0, 50, "")
+        }
+        p1.root.addChild(text)
 
         //----------------------------------
         var orange = new Primer.Layer()
@@ -83,12 +91,15 @@
         var dy = 1;
         function go() {
           orange.x += dx
-          if(orange.x<=-30){ dx = +1; }
-          if(200<=orange.x){ dx = -2; }
+          if(orange.x<=-30){ dx = +3; }
+          if(300<=orange.x){ dx = -2; }
 
           blue.y += dy
           if(blue.y<=0){  dy = +1; }
           if(30<=blue.y){ dy = -2; }
+
+          text.x = orange.x*2
+          text.y = 70-blue.y
 
           p1.redraw();
         }
@@ -101,8 +112,8 @@
 
   <body>
     <p>Testing</p>
-    <div style="border:1px gray solid">
-      <div id="div1"></div>
+    <div style="border:5px #333333 solid;">
+      <div id="div1" style="width:400px; height:400px; border:5px gray solid;"></div>
     </div>
   </body>
 </html>

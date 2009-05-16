@@ -5,28 +5,25 @@ function definePrimer($) {
   var Primer = Class.create({
     initialize : function(opts){
       this.container          = opts.container
-      this.width              = opts.width
-      this.height             = opts.height
       this.useGlobalMouseMove = opts.useGlobalMouseMove
+      this.debug              = opts.debug
+      this.context            = null
+      this.actions            = []
+      this.width              = $(this.container).width()
+      this.height             = $(this.container).height()
 
-      this.context = null
-      this.text_div = null
-      this.actions = []
-
-      $("html head").append("<style>.primer_text { position: absolute; margin: 0; padding: 0; line-height: normal; z-index: 0;}</style>")
+      $("html head").append("<style>.primer_text {position:absolute; margin:0; padding:0; line-height:normal;}</style>")
 
       var container = $(this.container).eq(0)
-      container.append('<div id="primer_text_div"></div>')
 
-      var text_div = $("#primer_text_div", container).eq(0)
-      text_div.css("position", "relative")
-      this.text_div = text_div
-
+      // <canvas>, this.context
       var canvas_el = document.createElement('canvas')
-      canvas_el.width  = this.width
-      canvas_el.height = this.height
-      canvas_el.style.zIndex= '0'
-      canvas_el.style.border = '1px black solid'
+      canvas_el.width    = this.width
+      canvas_el.height   = this.height
+      canvas_el.style.position = 'absolute'
+      if(this.debug){
+        canvas_el.style.border   = '5px blue solid'
+      }
       if (canvas_el.getContext) {
         container.append(canvas_el);
       } else {
@@ -36,46 +33,41 @@ function definePrimer($) {
         }
       }
       var canvas = $('canvas', container)
-
       this.context = canvas_el.getContext('2d')
-      //this.context = new Object()
-      //Object.extend(this.context.prototype, canvas_el.getContext('2d'))
-      this.root = new Primer.Layer()
+      this.extendContext()
 
-      this.setupExt()
-      var primer = this
-      if (this.useGlobalMouseMove) {
-        $('body').bind("mousemove", function(e) {
-          if ($(e.target).parents().find(this.container)) {
-            var $target = $(canvas_el)
-            var bounds = $target.offset()
-            e.localX = e.pageX - bounds.left
-            e.localY = e.pageY - bounds.top
-            primer.onMouseMove(e)
-          } else {
-            primer.outOfBounds();
-          }
-        })
-      } else {
-        canvas.bind("mousemove", function(e){
-          var bounds = $(e.currentTarget).offset()
-          e.localX = e.pageX - bounds.left
-          e.localY = e.pageY - bounds.top
-          primer.onMouseMove(e)
-        })
-        canvas.bind("click", function(e){
-          var bounds = $(e.currentTarget).offset()
-          e.localX = e.pageX - bounds.left
-          e.localY = e.pageY - bounds.top
-          primer.onClick(e)
-        })
+      // this.context.text_layer
+      var text_layer_el = document.createElement('div')
+      text_layer_el.id             = "primer_text_layer"
+      text_layer_el.style.position = 'absolute'
+      text_layer_el.style.overflow = "hidden"
+      if(this.debug){
+        text_layer_el.style.border   = '2px red solid'
       }
+      text_layer_el.style.width    = this.width+"px"
+      text_layer_el.style.height   = this.height+"px"
+      container.append(text_layer_el)
+      this.context.text_layer = $("#primer_text_layer", container)
+
+      this.root = new Primer.Layer()
+      var _this = this
+      this.context.text_layer.bind("mousemove", function(e){
+        var bounds = $(e.currentTarget).offset()
+        e.localX = e.pageX - bounds.left
+        e.localY = e.pageY - bounds.top
+        _this.onMouseMove(e)
+      })
+      this.context.text_layer.bind("click", function(e){
+        var bounds = $(e.currentTarget).offset()
+        e.localX = e.pageX - bounds.left
+        e.localY = e.pageY - bounds.top
+        _this.onClick(e)
+      })
     },
 
     redraw: function() {
       this.context.clearRect(0, 0, this.width, this.height)
-      $(".primer_text", this.text_div).remove()
-      this.setupExt()
+      this.context.resetTextLayer()
       this.root._draw(this)
     },
 
@@ -99,11 +91,68 @@ function definePrimer($) {
       // Do nothing by default
     },
 
-    setupExt: function() {
-      this.context.ext = {
-        textAlign: "left",
-        font: "10px sans-serif"
-      }
+    /* canvas extensions */
+    extendContext: function() {
+      Object.extend(this.context, {
+        initExt: function(){
+          this.stateStack = [{x:0, y:0}]
+        },
+
+        fillText: function(text, x, y, width, className) {
+          var ctx = this
+          var cs = this.currentState()
+          var styles = ''
+          styles += 'position:absolute;'
+          styles += 'left: '       + (cs.x+x) + 'px;'
+          styles += 'top: '        + (cs.y+y) + 'px;'
+          styles += 'width: '      + width + 'px;'
+          styles += 'text-align: ' + ctx.ext.textAlign + ';'
+          styles += 'color: '      + ctx.fillStyle + ';'
+          styles += 'font: '       + ctx.ext.font + ';'
+          ctx.text_layer.append('<p class="primer_text ' + className + '" style="' + styles + '">' + text + '</p>')
+        },
+
+        resetTextLayer: function(){
+          var ctx = this
+          ctx.ext = {
+            textAlign: "left",
+            font: "10px sans-serif"
+          }
+          $(".primer_text", ctx.text_layer).remove()
+        },
+
+        orig_translate: this.context.translate,
+        translate: function(x, y){
+          var cs = this.currentState()
+          cs.x += x
+          cs.y += y
+//log("translate", x ,y)
+          this.orig_translate(x, y)
+        },
+
+        orig_save: this.context.save,
+        save: function(){
+          this.orig_save()
+//log(this.currentState())
+          var newState = Object.clone(this.currentState())
+          this.stateStack.unshift(newState)
+//log("save:"+this.stateStack.length)
+        },
+
+        orig_restore: this.context.restore,
+        restore: function(){
+          if(2<=this.stateStack.length){
+            this.stateStack.shift()
+          }
+//log("restore:"+this.stateStack.length)
+          this.orig_restore()
+        },
+
+        currentState: function(){
+          return this.stateStack[0]
+        },
+      })
+      this.context.initExt()
     },
   }) // class Primer
 
@@ -232,7 +281,7 @@ function definePrimer($) {
       primer.context.save()
 
       primer.context.translate(this.x, this.y)
-      primer.context.rotate(10 * Math.PI / 180);
+//    primer.context.rotate(10 * Math.PI / 180);
 
 //      var backup_calls = this.calls.concat([])
       if(this.draw){ this.draw(primer.context) }
@@ -262,18 +311,6 @@ function definePrimer($) {
         child._draw(primer)
       })
       primer.context.restore()
-    },
-
-    /* canvas extensions */
-    extFillText: function(text, x, y, width, className) {
-      var styles = ''
-      styles += 'left: ' + (this.getGlobalX() + x) + 'px;'
-      styles += 'top: ' + (this.getGlobalY() + y) + 'px;'
-      styles += 'width: ' + width + 'px;'
-      styles += 'text-align: ' + this.context.ext.textAlign + ';'
-      styles += 'color: ' + this.context.fillStyle + ';'
-      styles += 'font: ' + this.context.ext.font + ';'
-      this.text_div.append('<p class="primer_text ' + className + '" style="' + styles + '">' + text + '</p>')
     },
 
     /* onMouseMove */
