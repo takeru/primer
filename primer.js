@@ -115,6 +115,14 @@ function definePrimer($) {
           this.orig_translate(x, y)
         },
 
+        orig_rotate: this.context.rotate,
+        rotate: function(r){
+          var cs = this.currentState()
+          cs.rotation += r
+          this.orig_rotate(r)
+        },
+// TODO save states as 'transform matrix' http://www.html5.jp/canvas/ref/method/transform.html
+
         orig_save: this.context.save,
         save: function(){
           this.orig_save()
@@ -181,8 +189,6 @@ function definePrimer($) {
           }
         },
 
-
-
 /*
           case "fillRect":         _this._hitDetect_fillRect(primer, e, call[1], call[2], call[3], call[4]); break
           case "fill":             _this._hitDetect_fill(primer, e); break
@@ -231,6 +237,7 @@ function definePrimer($) {
       this.name = "none"
       this.x = 0
       this.y = 0
+      this.rotation = 0 // 10*Math.PI/180
       this.visible = true
       this.draw = null
       if(init){
@@ -331,7 +338,7 @@ function definePrimer($) {
       primer.context.hitDetect = null
       primer.context.save()
       primer.context.translate(this.x, this.y)
-//    primer.context.rotate(10 * Math.PI / 180);
+      primer.context.rotate(this.rotation)
       if(this.draw){
         this.draw(primer.context)
       }
@@ -348,6 +355,7 @@ function definePrimer($) {
       primer.context.hitDetect = {x:this.x, y:this.y, hit:false, e:e}
       primer.context.save()
       primer.context.translate(this.x, this.y)
+      primer.context.rotate(this.rotation)
       if(this.draw){
         this.draw(primer.context)
         if(primer.context.hitDetect.hit){

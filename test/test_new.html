@@ -12,9 +12,12 @@
       $p = $
     </script>
     <script type="text/javascript" src="../excanvas_r3.compiled.js"></script>
-    <script type="text/javascript" src="../primer.js"           ></script>
+    <script type="text/javascript" src="../matrix.js"              ></script>
+    <script type="text/javascript" src="../primer.js"              ></script>
 
     <script type="text/javascript">
+Mat2D.test()
+
       jQuery(function() {
         var p1 = new Primer({container:"#div1", debug:true})
 
@@ -23,10 +26,9 @@
           ctx.strokeStyle = color
           ctx.lineWidth = 1
           ctx.beginPath()
-          ctx.moveTo(0, -20)
-          ctx.lineTo(0, +20)
-          ctx.moveTo(-20, 0)
-          ctx.lineTo(+20, 0)
+          ctx.moveTo( 0, 30)
+          ctx.lineTo( 0,  0)
+          ctx.lineTo(20,  0)
           ctx.stroke()
 ctx.strokeStyle = "#ffffff"
         }
@@ -41,11 +43,27 @@ ctx.strokeStyle = "#ffffff"
         })
 
         //----------------------------------
-        var red = p1.root.createChild({name:"red", x:70, y:10,
+        var red1 = p1.root.createChild({name:"red1", x:200, y:200,
           draw: function(ctx){
-            drawZero(ctx, "#ff0000")
+            drawZero(ctx, "#FFCCCC")
+            ctx.fillStyle = "#FFCCCC"
+            ctx.fillRect(2, 2, 45, 5, "hit=rectRed1")
+          }
+        })
+
+        var red2 = red1.createChild({name:"red2", x:50, y:0,
+          draw: function(ctx){
+            drawZero(ctx, "#FF6666")
+            ctx.fillStyle = "#FF6666"
+            ctx.fillRect(2, 2, 45, 5, "hit=rectRed2")
+          }
+        })
+
+        var red3 = red2.createChild({name:"red3", x:50, y:0,
+          draw: function(ctx){
+            drawZero(ctx, "#FF0000")
             ctx.fillStyle = "#FF0000"
-            ctx.fillRect(10, 10, 30, 50, "hit=rectRed")
+            ctx.fillRect(2, 2, 45, 5, "hit=rectRed3")
           }
         })
 
@@ -126,6 +144,10 @@ ctx.strokeStyle = "#ffffff"
 
           text.x = orange.x*2
           text.y = 70-blue.y
+          red1.rotation +=  2*Math.PI/180
+          red2.rotation += -3*Math.PI/180
+          red3.rotation +=  1*Math.PI/180
+          yellow.rotation += -3*Math.PI/180
 
           p1.redraw();
         }
