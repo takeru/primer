@@ -22,7 +22,6 @@ Mat2D.test()
         var p1 = new Primer({container:"#div1", debug:true})
 
         drawZero = function(ctx, color){
-//log("drawZero")
           ctx.strokeStyle = color
           ctx.lineWidth = 1
           ctx.beginPath()
@@ -30,9 +29,8 @@ Mat2D.test()
           ctx.lineTo( 0,  0)
           ctx.lineTo(20,  0)
           ctx.stroke()
-ctx.strokeStyle = "#ffffff"
         }
-
+/*
         //----------------------------------
         var blue = p1.root.createChild({name:"blue", x:40, y:40,
           draw: function(ctx){
@@ -41,16 +39,28 @@ ctx.strokeStyle = "#ffffff"
             ctx.fillRect(0, 0, 50, 50, "hit=rectBlue")
           }
         })
-
+*/
         //----------------------------------
-        var red1 = p1.root.createChild({name:"red1", x:200, y:200,
+        var red1 = p1.root.createChild({name:"red1", x:100, y:0,
           draw: function(ctx){
             drawZero(ctx, "#FFCCCC")
             ctx.fillStyle = "#FFCCCC"
             ctx.fillRect(2, 2, 45, 5, "hit=rectRed1")
+
+            var xy = [30,30].transform(ctx.currentState().mat2d)
+            red1b.x = xy[0]
+            red1b.y = xy[1]
           }
         })
+red1.rotation = 45/180*Math.PI;
 
+var red1b = p1.root.createChild({name:"red1->[30,30]", x:0, y:0,
+  draw: function(ctx){
+    drawZero(ctx, "#0000cc")
+  }
+})
+
+/*
         var red2 = red1.createChild({name:"red2", x:50, y:0,
           draw: function(ctx){
             drawZero(ctx, "#FF6666")
@@ -66,7 +76,10 @@ ctx.strokeStyle = "#ffffff"
             ctx.fillRect(2, 2, 45, 5, "hit=rectRed3")
           }
         })
+*/
 
+
+/*
         //----------------------------------
         var green = p1.root.createChild({name:"green", x:10, y:60, fillStyle:"#008800",
           draw: function(ctx){
@@ -129,11 +142,12 @@ ctx.strokeStyle = "#ffffff"
             ctx.fillRect(0, 0, 20, 20, "hit=rectYellow")
           },
         })
-
+*/
         //----------------------------------
         var dx = 1;
         var dy = 1;
         function go() {
+/*
           orange.x += dx
           if(orange.x<=-30){ dx = +3; }
           if(300<=orange.x){ dx = -2; }
@@ -144,10 +158,12 @@ ctx.strokeStyle = "#ffffff"
 
           text.x = orange.x*2
           text.y = 70-blue.y
-          red1.rotation +=  2*Math.PI/180
-          red2.rotation += -3*Math.PI/180
-          red3.rotation +=  1*Math.PI/180
           yellow.rotation += -3*Math.PI/180
+*/
+
+//          red1.rotation +=  2*Math.PI/180
+//          red2.rotation += -3*Math.PI/180
+//          red3.rotation +=  1*Math.PI/180
 
           p1.redraw();
         }

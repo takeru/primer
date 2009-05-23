@@ -79,17 +79,18 @@ function definePrimer($) {
     extendContext: function() {
       Object.extend(this.context, {
         initExt: function(){
-          this.stateStack = [{x:0, y:0}]
+          this.stateStack = [{mat2d:new Mat2D()}]
           this.hitDetect = false;
         },
 
         fillText: function(text, x, y, width, className) {
           var ctx = this
           var cs = this.currentState()
+          var xy = [x,y].transform(cs.mat2d)
           var styles = ''
           styles += 'position:absolute;'
-          styles += 'left: '       + (cs.x+x) + 'px;'
-          styles += 'top: '        + (cs.y+y) + 'px;'
+          styles += 'left: '       + (xy[0]) + 'px;'
+          styles += 'top: '        + (xy[1]) + 'px;'
           styles += 'width: '      + width + 'px;'
           styles += 'text-align: ' + ctx.ext.textAlign + ';'
           styles += 'color: '      + ctx.fillStyle + ';'
@@ -109,16 +110,15 @@ function definePrimer($) {
         orig_translate: this.context.translate,
         translate: function(x, y){
           var cs = this.currentState()
-          cs.x += x
-          cs.y += y
-//log("translate", x ,y)
+//log(cs.mat2d)
+          cs.mat2d = cs.mat2d.translate(x, y)
           this.orig_translate(x, y)
         },
 
         orig_rotate: this.context.rotate,
         rotate: function(r){
           var cs = this.currentState()
-          cs.rotation += r
+          cs.mat2d = cs.mat2d.rotate(r)
           this.orig_rotate(r)
         },
 // TODO save states as 'transform matrix' http://www.html5.jp/canvas/ref/method/transform.html
@@ -182,13 +182,14 @@ function definePrimer($) {
 
         testHit: function() {
           var cs = this.currentState()
-          var testX = this.hitDetect.e.localX-cs.x
-          var testY = this.hitDetect.e.localY-cs.y
-          if(this.isPointInPath(testX, testY)) {
+          //var testX = this.hitDetect.e.localX-cs.x
+          //var testY = this.hitDetect.e.localY-cs.y
+          var testXY = [this.hitDetect.e.localX, this.hitDetect.e.localY].transform(cs.mat2d.inv())
+log(testXY)
+          if(this.isPointInPath(testXY[0], testXY[1])) {
             this.hitDetect.hit = true
           }
         },
-
 /*
           case "fillRect":         _this._hitDetect_fillRect(primer, e, call[1], call[2], call[3], call[4]); break
           case "fill":             _this._hitDetect_fill(primer, e); break
@@ -351,6 +352,7 @@ function definePrimer($) {
     /* hit */
     _hit: function(primer, e) {
       if(!this.visible) { return [] }
+log(this.name, e.localX, e.localY)
       var layers = []
       primer.context.hitDetect = {x:this.x, y:this.y, hit:false, e:e}
       primer.context.save()
@@ -379,11 +381,11 @@ function definePrimer($) {
         log("warn", this.x, this.y)
       }
       var layers = this._hit(primer, e)
-      log("=====================================")
       log("layers.length", layers.length)
       layers.each(function(layer){
         log(layer.name, layer.x, layer.y)
       })
+      log("=====================================")
     },
   }) // class Primer.Layer
 
