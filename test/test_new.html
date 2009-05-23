@@ -16,7 +16,7 @@
     <script type="text/javascript" src="../primer.js"              ></script>
 
     <script type="text/javascript">
-Mat2D.test()
+//Mat2D.test()
 
       jQuery(function() {
         var p1 = new Primer({container:"#div1", debug:true})
@@ -30,7 +30,7 @@ Mat2D.test()
           ctx.lineTo(20,  0)
           ctx.stroke()
         }
-/*
+
         //----------------------------------
         var blue = p1.root.createChild({name:"blue", x:40, y:40,
           draw: function(ctx){
@@ -39,28 +39,16 @@ Mat2D.test()
             ctx.fillRect(0, 0, 50, 50, "hit=rectBlue")
           }
         })
-*/
+
         //----------------------------------
-        var red1 = p1.root.createChild({name:"red1", x:100, y:0,
+        var red1 = p1.root.createChild({name:"red1", x:200, y:200,
           draw: function(ctx){
             drawZero(ctx, "#FFCCCC")
             ctx.fillStyle = "#FFCCCC"
             ctx.fillRect(2, 2, 45, 5, "hit=rectRed1")
-
-            var xy = [30,30].transform(ctx.currentState().mat2d)
-            red1b.x = xy[0]
-            red1b.y = xy[1]
           }
         })
-red1.rotation = 45/180*Math.PI;
 
-var red1b = p1.root.createChild({name:"red1->[30,30]", x:0, y:0,
-  draw: function(ctx){
-    drawZero(ctx, "#0000cc")
-  }
-})
-
-/*
         var red2 = red1.createChild({name:"red2", x:50, y:0,
           draw: function(ctx){
             drawZero(ctx, "#FF6666")
@@ -74,12 +62,24 @@ var red1b = p1.root.createChild({name:"red1->[30,30]", x:0, y:0,
             drawZero(ctx, "#FF0000")
             ctx.fillStyle = "#FF0000"
             ctx.fillRect(2, 2, 45, 5, "hit=rectRed3")
+
+            var xy = [50,0].transform(ctx.currentState().mat2d)
+            red3b.x = xy[0]
+            red3b.y = xy[1]
+          },
+          mousemove: function(){
+            log("red3:mousemove")
+          },
+        })
+
+        // for Mat2D test
+        var red3b = p1.root.createChild({name:"red3->[50,0]", x:0, y:0,
+          draw: function(ctx){
+            drawZero(ctx, "#0000cc")
           }
         })
-*/
 
 
-/*
         //----------------------------------
         var green = p1.root.createChild({name:"green", x:10, y:60, fillStyle:"#008800",
           draw: function(ctx){
@@ -142,12 +142,11 @@ var red1b = p1.root.createChild({name:"red1->[30,30]", x:0, y:0,
             ctx.fillRect(0, 0, 20, 20, "hit=rectYellow")
           },
         })
-*/
+
         //----------------------------------
         var dx = 1;
         var dy = 1;
         function go() {
-/*
           orange.x += dx
           if(orange.x<=-30){ dx = +3; }
           if(300<=orange.x){ dx = -2; }
@@ -159,11 +158,10 @@ var red1b = p1.root.createChild({name:"red1->[30,30]", x:0, y:0,
           text.x = orange.x*2
           text.y = 70-blue.y
           yellow.rotation += -3*Math.PI/180
-*/
 
-//          red1.rotation +=  2*Math.PI/180
-//          red2.rotation += -3*Math.PI/180
-//          red3.rotation +=  1*Math.PI/180
+          red1.rotation +=   2*Math.PI/180
+          red2.rotation +=  -3*Math.PI/180
+          red3.rotation +=  -1*Math.PI/180
 
           p1.redraw();
         }

@@ -54,13 +54,22 @@ function definePrimer($) {
         var bounds = $(e.currentTarget).offset()
         e.localX = e.pageX - bounds.left
         e.localY = e.pageY - bounds.top
-        _this.root.onMouseMove(_this, e)
+        var layers = _this.root._hit(_this, e)
+        layers.each(function(layer){
+          if(layer.mousemove){ layer.mousemove() }
+        })
       })
       this.context.text_layer.bind("click", function(e){
         var bounds = $(e.currentTarget).offset()
         e.localX = e.pageX - bounds.left
         e.localY = e.pageY - bounds.top
-        _this.root.onClick(_this, e)
+        if (_this.root.x!=0 || _this.root.y!=0) {
+          log("warn", this.x, this.y)
+        }
+        var layers = _this.root._hit(_this, e)
+        layers.each(function(layer){
+          if(layer.click){ layer.click() }
+        })
       })
     },
 
@@ -110,15 +119,14 @@ function definePrimer($) {
         orig_translate: this.context.translate,
         translate: function(x, y){
           var cs = this.currentState()
-//log(cs.mat2d)
-          cs.mat2d = cs.mat2d.translate(x, y)
+          cs.mat2d = cs.mat2d.translate(x,y) //Mat2D.translate(x, y).x(cs.mat2d)
           this.orig_translate(x, y)
         },
 
         orig_rotate: this.context.rotate,
         rotate: function(r){
           var cs = this.currentState()
-          cs.mat2d = cs.mat2d.rotate(r)
+          cs.mat2d = cs.mat2d.rotate(r) //Mat2D.rotate(r).x(cs.mat2d)
           this.orig_rotate(r)
         },
 // TODO save states as 'transform matrix' http://www.html5.jp/canvas/ref/method/transform.html
@@ -185,7 +193,7 @@ function definePrimer($) {
           //var testX = this.hitDetect.e.localX-cs.x
           //var testY = this.hitDetect.e.localY-cs.y
           var testXY = [this.hitDetect.e.localX, this.hitDetect.e.localY].transform(cs.mat2d.inv())
-log(testXY)
+//log(testXY)
           if(this.isPointInPath(testXY[0], testXY[1])) {
             this.hitDetect.hit = true
           }
@@ -352,9 +360,9 @@ log(testXY)
     /* hit */
     _hit: function(primer, e) {
       if(!this.visible) { return [] }
-log(this.name, e.localX, e.localY)
+//log(this.name, e.localX, e.localY)
       var layers = []
-      primer.context.hitDetect = {x:this.x, y:this.y, hit:false, e:e}
+      primer.context.hitDetect = {hit:false, e:e}
       primer.context.save()
       primer.context.translate(this.x, this.y)
       primer.context.rotate(this.rotation)
@@ -369,23 +377,6 @@ log(this.name, e.localX, e.localY)
       })
       primer.context.restore()
       return layers
-    },
-
-    /* onMouseMove */
-    onMouseMove: function(primer, e) {
-    },
-
-    /* onClick */
-    onClick: function(primer, e) {
-      if (this.x!=0 || this.y!=0) {
-        log("warn", this.x, this.y)
-      }
-      var layers = this._hit(primer, e)
-      log("layers.length", layers.length)
-      layers.each(function(layer){
-        log(layer.name, layer.x, layer.y)
-      })
-      log("=====================================")
     },
   }) // class Primer.Layer
 

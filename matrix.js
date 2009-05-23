@@ -211,28 +211,34 @@ var Mat2D = Class.create(Matrix, {
     this._class_name = "Mat2D"
   },
   zoom: function(zx,zy){
-    return new Mat2D([
+/*    return new Mat2D([
       [zx, 0, 0],
       [ 0,zy, 0],
       [ 0, 0, 1],
-    ]).mul(this)
+    ]).mul(this)*/
+    return this.mul(new Mat2D([
+      [zx, 0, 0],
+      [ 0,zy, 0],
+      [ 0, 0, 1],
+    ]))
   },
   rotate: function(r){
-    return new Mat2D([
+    return this.mul(new Mat2D([
       [ Math.cos(r), -Math.sin(r), 0],
       [ Math.sin(r),  Math.cos(r), 0],
       [           0,            0, 1],
-    ]).mul(this)
+    ])) //.mul(this)
   },
   translate: function(dx,dy){
-    return new Mat2D([
+    return this.mul(new Mat2D([
       [ 1, 0, dx],
       [ 0, 1, dy],
       [ 0, 0,  1],
-    ]).mul(this)
+    ])) //.mul(this)
   },
   x: function(m2){
-    return m2.mul(this)
+    //return m2.mul(this)
+    return this.mul(m2)
   }
 })
 Mat2D.zoom      = function(zx,zy){ return new Mat2D().zoom(zx,zy) }
@@ -246,63 +252,35 @@ Array.prototype.transform = function(mat){
   return [result.val[0][0], result.val[1][0]]
 }
 Array.prototype.x = Array.prototype.transform
-Array.prototype.zoom = function(zx,zy){
+Array.prototype.zoom0 = function(zx,zy){
   return this.transform( Mat2D.zoom(zx,zy) )
 }
-Array.prototype.rotate = function(r){
+Array.prototype.rotate0 = function(r){
   return this.transform( Mat2D.rotate(r) )
 }
-Array.prototype.translate = function(zx,zy){
+Array.prototype.translate0 = function(zx,zy){
   return this.transform( Mat2D.translate(zx,zy) )
 }
 
 Mat2D.test = function(){
-/*
-m1 = new Matrix([
-  [1,0,1],
-  [0,1,1],
-  [0,0,1],
-])
-m1.log()
-m2 = new Matrix([
-  [100],
-  [100],
-  [  1],
-])
-m2.log()
-m1.mul(m2).log()
+  var x  = 50
+  var y  =  0
 
-//log( [100,100].transform(new Mat2D().zoom(2,3)) )              // [200, 300]
-//log( [100,100].transform(new Mat2D().rotate(90/180*Math.PI)) ) // [-100, 100]
-//log( [100,100].transform(new Mat2D().rotate(45/180*Math.PI)) ) // [0, 141.4....]
-//log( [100,100].transform(new Mat2D().translate(20,30)) )       // [120, 130]
+  var dx = 100
+  var dy =   0
+  var r  = 45/180*Math.PI
+  var zx = 1.0
+  var zy = 1.0
 
-log("A",  [100,100].transform(new Mat2D().zoom(2,3)) )
-log("B",  [100,100].transform(new Mat2D().zoom(2,3).rotate(90/180*Math.PI)) )
-log("C1", [100,100].transform(new Mat2D().zoom(2,3).rotate(90/180*Math.PI).translate(20,30)) )
-log("C2", [100,100].transform(Mat2D.zoom(2,3).rotate(90/180*Math.PI).translate(20,30)) )
-log("C3", [100,100].zoom(2,3).rotate(90/180*Math.PI).translate(20,30) )
-*/
-
-  var x  = 100
-  var y  = 200
-  var zx = 3
-  var zy = 4
-  var dx = 50
-  var dy = 60
-  var r  = 90/180*Math.PI
-
-  var mat1    = Mat2D.zoom(zx,zy)
+  var mat1    = Mat2D.translate(dx,dy)
   mat1.log("mat1")
-  var mat2    = Mat2D.rotate(r)
+  var mat2    = Mat2D.zoom(zx,zy)
   mat2.log("mat2")
-  var mat3    = Mat2D.translate(dx,dy)
+  var mat3    = Mat2D.rotate(r)
   mat3.log("mat3")
-
   var mat123a = mat1.x(mat2).x(mat3)
   mat123a.log("mat123a")
-
-  var mat123b = Mat2D.zoom(zx,zy).rotate(r).translate(dx,dy)
+  var mat123b = Mat2D.translate(dx,dy).zoom(zx,zy).rotate(r)
   mat123b.log("mat123b")
 
   var mat12 = mat1.x(mat2)
@@ -311,19 +289,18 @@ log("C3", [100,100].zoom(2,3).rotate(90/180*Math.PI).translate(20,30) )
   var mat23 = mat2.x(mat3)
   mat23.log("mat23")
 
-  log( [x,y].transform(mat123a) )
-  log( [x,y].transform(mat123b) )
-  log( [x,y].zoom(zx,zy).rotate(r).translate(dx,dy) )
-  log( [x,y].transform(mat12).transform(mat3) )
-  log( [x,y].transform(mat12).translate(dx,dy) )
-  log( [x,y].transform(mat1).transform(mat23) )
-  log( [x,y].zoom(zx,zy).transform(mat23) )
-
-  log( [x,y].x(mat1).x(mat23) )
-  log( [x,y].x(mat1).x(mat2.x(mat3)) )
-  log( [x,y].x(mat1).x(mat2).x(mat3) )
-  log( [x,y].x(mat1.x(mat2)).x(mat3) )
-  log( [x,y].x(mat1.x(mat2).x(mat3)) )
+  log("a", [x,y].transform(mat123a))
+  log("b", [x,y].transform(mat123b))
+  log("c", [x,y].rotate0(r).zoom0(zx,zy).translate0(dx,dy))
+  log("d", [x,y].transform(mat3).transform(mat12))
+  log("e", [x,y].x(mat12.rotate(r)))
+  log("f", [x,y].transform(mat1.x(mat23)))
+  log("g", [x,y].x(mat3).x(mat2).x(mat1))
+  log("h", [x,y].rotate0(r).zoom0(zx,zy).translate0(dx,dy))
+  log("i", [x,y].x(mat1.x(mat2).x(mat3)))
+  log("j", [x,y].x(  mat1  .x(mat2)  .x(mat3) ) )
+  log("k", [x,y].x(  mat1  .x((mat2).x(mat3)) ) )
+  log("l", [x,y].x( (mat1.x(mat2))  .x(mat3)  ) )
 
   log("-------------------")
   var inv = mat123a.inv()
