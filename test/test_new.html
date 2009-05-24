@@ -30,13 +30,13 @@
           ctx.lineTo(20,  0)
           ctx.stroke()
         }
-        var logMouseEvent = function(e,l){
-          log(l.name+":"+e.type+" ["+e.hitKeys+"] e.testXY=("+e.testX+","+e.testY+")"+" e.localXY=("+e.localX+","+e.localY+")")
+        var logMouseEvent = function(e){
+          log(e.layer.name+":"+e.event.type+" ["+e.hitKeys+"] testXY=("+e.testX+","+e.testY+")"+" localXY=("+e.event.localX+","+e.event.localY+")")
         }
         var addLogMouseEvent = function(l){
-          if(!l.click){     l.click     = logMouseEvent }
-//        if(!l.mousedown){ l.mousedown = logMouseEvent }
-//        if(!l.mouseup){   l.mouseup   = logMouseEvent }
+          if(!l.click){     l.click     = logMouseEvent; return true; }
+//        if(!l.mousedown){ l.mousedown = logMouseEvent; return true; }
+//        if(!l.mouseup){   l.mouseup   = logMouseEvent; return true; }
         }
 
         //----------------------------------
@@ -144,10 +144,24 @@
             green.fillStyle  = "#00FF00"
             p1.redraw()
           },
-          mouseout: function(){
+          mouseup: function(){
             black.visible = false
             orange.fillStyle = "#FF8800"
             green.fillStyle  = "#008800"
+            p1.redraw()
+            // log("mouseup:"+this.name)
+          },
+          dropAccept: function(e, drag){
+            // log("dropAccept:"+this.name, drag)
+            if(drag.dragTarget){ // && drag.dragTarget.layer.name=="*dragtest"){
+              orange.fillStyle = "#660000"
+              p1.redraw()
+              return true
+            }
+          },
+          dropped: function(e, drag){
+            log("dropped:"+this.name, "dragTarget="+drag.dragTarget.layer.name)
+            orange.fillStyle = "#FF9999"
             p1.redraw()
           },
         })
@@ -160,8 +174,47 @@
             ctx.fillStyle = "#FFFF00"
             ctx.fillRect(0, 0, 20, 20, "y")
           },
-        })
+          dragAccept: function(e){
+            return true
+          },
+          dragBegin: function(){
+            log("dragBegin:"+this.name)
+          },
+          dragging: function(){
+            log("dragging:"+this.name)
+          },
+          dragEnd: function(){
+            log("dragEnd:"+this.name)
+          },        })
         addLogMouseEvent(yellow)
+
+        //----------------------------------
+        var dragtest = p1.root.createChild({name:"*dragtest", x:100, y:50,
+          draw: function(ctx){
+            ctx.fillStyle = "#FF4400"
+            ctx.fillRect(0, 0, 20, 20, "or")
+            ctx.fillStyle = "#ffffdd"
+            ctx.fillRect(15, 5, 10, 10, "wh")
+            ctx.strokeStyle = "#884400"
+            ctx.strokeRect(15, 5, 10, 10)
+            drawZero(ctx, "#008800")
+          },
+          dragAccept: function(e){
+            if(0<=e.hitKeys.indexOf("wh")){
+              return true // start dragging
+            }
+          },
+          dragBegin: function(){
+            log("dragBegin:"+this.name)
+          },
+          dragging: function(){
+            log("dragging:"+this.name)
+          },
+          dragEnd: function(){
+            log("dragEnd:"+this.name)
+          },
+        })
+        addLogMouseEvent(dragtest)
 
         //----------------------------------
         var dx = 1;
