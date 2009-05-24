@@ -50,26 +50,28 @@ function definePrimer($) {
 
       this.root = new Primer.Layer()
       var _this = this
-      this.context.text_layer.bind("mousemove", function(e){
-        var bounds = $(e.currentTarget).offset()
-        e.localX = e.pageX - bounds.left
-        e.localY = e.pageY - bounds.top
-        var layers = _this.root._hit(_this, e)
-        layers.each(function(layer){
-          if(layer.mousemove){ layer.mousemove() }
-        })
-      })
-      this.context.text_layer.bind("click", function(e){
-        var bounds = $(e.currentTarget).offset()
-        e.localX = e.pageX - bounds.left
-        e.localY = e.pageY - bounds.top
-        if (_this.root.x!=0 || _this.root.y!=0) {
-          log("warn", this.x, this.y)
+//    this.context.text_layer.bind("mousemove", {primer:this}, this._mouse_event_callback)
+      this.context.text_layer.bind("mousedown", {primer:this}, this._mouse_event_callback)
+      this.context.text_layer.bind("mouseup",   {primer:this}, this._mouse_event_callback)
+      this.context.text_layer.bind("click",     {primer:this}, this._mouse_event_callback)
+    },
+
+    _mouse_event_callback: function(e){
+      var primer = e.data.primer
+      var bounds = $(e.currentTarget).offset()
+      e.localX = e.pageX - bounds.left
+      e.localY = e.pageY - bounds.top
+      if (primer.root.x!=0 || primer.root.y!=0) {
+        log("WARN x/y is not 0", primer.root.x, primer.root.y)
+      }
+      var hits = primer.root._hit(primer, e)
+      hits.each(function(hit){
+        var layer = hit.layer
+        e.testX = hit.testX
+        e.testY = hit.testY
+        if(layer[e.type]){
+          layer[e.type](e, layer)
         }
-        var layers = _this.root._hit(_this, e)
-        layers.each(function(layer){
-          if(layer.click){ layer.click() }
-        })
       })
     },
 
@@ -158,10 +160,6 @@ function definePrimer($) {
           if(!this.hitDetect){
             this.orig_fillRect(x, y, w, h)
           }else{
-            //log(this.hitDetect, this.hitDetect.e, arguments)
-            //log("localXY", this.hitDetect.e.localX, this.hitDetect.e.localY)
-            //log("testXY", testX, testY)
-            //log("cs", cs)
             this.beginPath()
             this.moveTo(x  , y  )
             this.lineTo(x+w, y  )
@@ -190,11 +188,10 @@ function definePrimer($) {
 
         testHit: function() {
           var cs = this.currentState()
-          //var testX = this.hitDetect.e.localX-cs.x
-          //var testY = this.hitDetect.e.localY-cs.y
           var testXY = [this.hitDetect.e.localX, this.hitDetect.e.localY].transform(cs.mat2d.inv())
-//log(testXY)
-          if(this.isPointInPath(testXY[0], testXY[1])) {
+          this.hitDetect.testX = testXY[0]
+          this.hitDetect.testY = testXY[1]
+          if(this.isPointInPath(this.hitDetect.testX, this.hitDetect.testY)) {
             this.hitDetect.hit = true
           }
         },
@@ -361,22 +358,24 @@ function definePrimer($) {
     _hit: function(primer, e) {
       if(!this.visible) { return [] }
 //log(this.name, e.localX, e.localY)
-      var layers = []
-      primer.context.hitDetect = {hit:false, e:e}
+      var hits = []
+      primer.context.hitDetect = {hit:false, e:e, testX:"?", testY:"?"}
       primer.context.save()
       primer.context.translate(this.x, this.y)
       primer.context.rotate(this.rotation)
       if(this.draw){
         this.draw(primer.context)
-        if(primer.context.hitDetect.hit){
-          layers.push(this)
+        var hitDetect = primer.context.hitDetect
+        if(hitDetect.hit){
+          var hit = {layer:this, testX:hitDetect.testX, testY:hitDetect.testY}
+          hits.push(hit)
         }
       }
       this.children.each(function(child){
-        layers = layers.concat(child._hit(primer, e))
+        hits = hits.concat(child._hit(primer, e))
       })
       primer.context.restore()
-      return layers
+      return hits
     },
   }) // class Primer.Layer
 

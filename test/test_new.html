@@ -21,7 +21,7 @@
       jQuery(function() {
         var p1 = new Primer({container:"#div1", debug:true})
 
-        drawZero = function(ctx, color){
+        var drawZero = function(ctx, color){
           ctx.strokeStyle = color
           ctx.lineWidth = 1
           ctx.beginPath()
@@ -30,6 +30,14 @@
           ctx.lineTo(20,  0)
           ctx.stroke()
         }
+        var logMouseEvent = function(e,l){
+          log(l.name+":"+e.type+" e.testXY=("+e.testX+","+e.testY+")"+" e.localXY=("+e.localX+","+e.localY+")")
+        }
+        var addLogMouseEvent = function(l){
+          if(!l.click){     l.click     = logMouseEvent }
+//        if(!l.mousedown){ l.mousedown = logMouseEvent }
+//        if(!l.mouseup){   l.mouseup   = logMouseEvent }
+        }
 
         //----------------------------------
         var blue = p1.root.createChild({name:"blue", x:40, y:40,
@@ -37,8 +45,9 @@
             drawZero(ctx, "#0000ff")
             ctx.fillStyle = "#0000FF"
             ctx.fillRect(0, 0, 50, 50, "hit=rectBlue")
-          }
+          },
         })
+        addLogMouseEvent(blue)
 
         //----------------------------------
         var red1 = p1.root.createChild({name:"red1", x:200, y:200,
@@ -46,16 +55,18 @@
             drawZero(ctx, "#FFCCCC")
             ctx.fillStyle = "#FFCCCC"
             ctx.fillRect(2, 2, 45, 5, "hit=rectRed1")
-          }
+          },
         })
+        addLogMouseEvent(red1)
 
         var red2 = red1.createChild({name:"red2", x:50, y:0,
           draw: function(ctx){
             drawZero(ctx, "#FF6666")
             ctx.fillStyle = "#FF6666"
             ctx.fillRect(2, 2, 45, 5, "hit=rectRed2")
-          }
+          },
         })
+        addLogMouseEvent(red2)
 
         var red3 = red2.createChild({name:"red3", x:50, y:0,
           draw: function(ctx){
@@ -67,10 +78,8 @@
             red3b.x = xy[0]
             red3b.y = xy[1]
           },
-          mousemove: function(){
-            log("red3:mousemove")
-          },
         })
+        addLogMouseEvent(red3)
 
         // for Mat2D test
         var red3b = p1.root.createChild({name:"red3->[50,0]", x:0, y:0,
@@ -78,7 +87,7 @@
             drawZero(ctx, "#0000cc")
           }
         })
-
+        addLogMouseEvent(red3b)
 
         //----------------------------------
         var green = p1.root.createChild({name:"green", x:10, y:60, fillStyle:"#008800",
@@ -88,6 +97,7 @@
             ctx.fillRect(0, 0, 5+blue.y/2, 10+orange.x/10, "hit=rectGreen")
           }
         })
+        addLogMouseEvent(green)
 
         //----------------------------------
         var black = p1.root.createChild({name:"black", x:5, y:5, visible:false,
@@ -97,6 +107,7 @@
             //ctx.strokeRect(0, 0, 10+blue.y, 30)
           }
         })
+        addLogMouseEvent(black)
 
         //----------------------------------
         var text = p1.root.createChild({name:"text", x:60, y:60,
@@ -105,6 +116,7 @@
             ctx.fillText("hello? 123 456 789 abc def", 20, 20, 50, "", "hit=text")
           }
         })
+        addLogMouseEvent(text)
 
         //----------------------------------
         var orange = blue.createChild({name:"orange", x:30, y:0, fillStyle:"#FF8800",
@@ -120,7 +132,7 @@
             ctx.fill("hit=fillOrange")
             ctx.stroke()
           },
-          mouseover: function(){
+          mousemove: function(){
             black.visible = true
             orange.fillStyle = "#FF4400"
             green.fillStyle  = "#00FF00"
@@ -133,6 +145,7 @@
             p1.redraw()
           },
         })
+        addLogMouseEvent(orange)
 
         //----------------------------------
         var yellow = orange.createChild({name:"yellow", x:-40, y:80,
@@ -142,6 +155,7 @@
             ctx.fillRect(0, 0, 20, 20, "hit=rectYellow")
           },
         })
+        addLogMouseEvent(yellow)
 
         //----------------------------------
         var dx = 1;
@@ -164,9 +178,14 @@
           red3.rotation +=  -1*Math.PI/180
 
           p1.redraw();
+          timer_counter++
+          if(10<timer_counter){
+            clearInterval(timer)
+          }
         }
 
-        setInterval(go, 150)
+        var timer = setInterval(go, 150)
+        var timer_counter = 0
         p1.redraw();
       })
     </script>
