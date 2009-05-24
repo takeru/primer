@@ -69,6 +69,7 @@ function definePrimer($) {
         var layer = hit.layer
         e.testX = hit.testX
         e.testY = hit.testY
+        e.hitKeys = hit.hitKeys
         if(layer[e.type]){
           layer[e.type](e, layer)
         }
@@ -94,19 +95,31 @@ function definePrimer($) {
           this.hitDetect = false;
         },
 
-        fillText: function(text, x, y, width, className) {
-          var ctx = this
-          var cs = this.currentState()
-          var xy = [x,y].transform(cs.mat2d)
-          var styles = ''
-          styles += 'position:absolute;'
-          styles += 'left: '       + (xy[0]) + 'px;'
-          styles += 'top: '        + (xy[1]) + 'px;'
-          styles += 'width: '      + width + 'px;'
-          styles += 'text-align: ' + ctx.ext.textAlign + ';'
-          styles += 'color: '      + ctx.fillStyle + ';'
-          styles += 'font: '       + ctx.ext.font + ';'
-          ctx.text_layer.append('<p class="primer_text ' + className + '" style="' + styles + '">' + text + '</p>')
+        fillText: function(text, x, y, width, className, _hitKey) {
+          if(!this.hitDetect){
+            var ctx = this
+            var cs = this.currentState()
+            var xy = [x,y].transform(cs.mat2d)
+            var styles = ''
+            styles += 'position:absolute;'
+            styles += 'left: '       + (xy[0]) + 'px;'
+            styles += 'top: '        + (xy[1]) + 'px;'
+            styles += 'width: '      + width + 'px;'
+            styles += 'text-align: ' + ctx.ext.textAlign + ';'
+            styles += 'color: '      + ctx.fillStyle + ';'
+            styles += 'font: '       + ctx.ext.font + ';'
+            ctx.text_layer.append('<p class="primer_text ' + className + '" style="' + styles + '">' + text + '</p>')
+          }else{
+            var w = width
+            var h = 10 //TODO
+            this.beginPath()
+            this.moveTo(x  , y  )
+            this.lineTo(x+w, y  )
+            this.lineTo(x+w, y+h)
+            this.lineTo(x  , y+h)
+            this.lineTo(x  , y  )
+            this.testHit(_hitKey)
+          }
         },
 
         resetTextLayer: function(){
@@ -156,7 +169,7 @@ function definePrimer($) {
         },
 
         orig_fillRect: this.context.fillRect,
-        fillRect: function(x, y, w, h, hitKey){
+        fillRect: function(x, y, w, h, _hitKey){
           if(!this.hitDetect){
             this.orig_fillRect(x, y, w, h)
           }else{
@@ -166,33 +179,34 @@ function definePrimer($) {
             this.lineTo(x+w, y+h)
             this.lineTo(x  , y+h)
             this.lineTo(x  , y  )
-            this.testHit()
+            this.testHit(_hitKey)
           }
         },
 
         orig_fill: this.context.fill,
-        fill: function(hitKey){
+        fill: function(_hitKey){
           if(!this.hitDetect){
             this.orig_fill()
           }else{
-            this.testHit()
+            this.testHit(_hitKey)
           }
         },
 
         orig_stroke: this.context.stroke,
-        stroke: function(hitKey){
+        stroke: function(){
           if(!this.hitDetect){
             this.orig_stroke()
           }
         },
 
-        testHit: function() {
+        testHit: function(hitKey) {
           var cs = this.currentState()
           var testXY = [this.hitDetect.e.localX, this.hitDetect.e.localY].transform(cs.mat2d.inv())
           this.hitDetect.testX = testXY[0]
           this.hitDetect.testY = testXY[1]
           if(this.isPointInPath(this.hitDetect.testX, this.hitDetect.testY)) {
             this.hitDetect.hit = true
+            this.hitDetect.hitKeys.push(hitKey)
           }
         },
 /*
@@ -359,7 +373,7 @@ function definePrimer($) {
       if(!this.visible) { return [] }
 //log(this.name, e.localX, e.localY)
       var hits = []
-      primer.context.hitDetect = {hit:false, e:e, testX:"?", testY:"?"}
+      primer.context.hitDetect = {hit:false, e:e, testX:undefined, testY:undefined, hitKeys:[]}
       primer.context.save()
       primer.context.translate(this.x, this.y)
       primer.context.rotate(this.rotation)
@@ -367,7 +381,7 @@ function definePrimer($) {
         this.draw(primer.context)
         var hitDetect = primer.context.hitDetect
         if(hitDetect.hit){
-          var hit = {layer:this, testX:hitDetect.testX, testY:hitDetect.testY}
+          var hit = {layer:this, testX:hitDetect.testX, testY:hitDetect.testY, hitKeys:hitDetect.hitKeys}
           hits.push(hit)
         }
       }

@@ -31,7 +31,7 @@
           ctx.stroke()
         }
         var logMouseEvent = function(e,l){
-          log(l.name+":"+e.type+" e.testXY=("+e.testX+","+e.testY+")"+" e.localXY=("+e.localX+","+e.localY+")")
+          log(l.name+":"+e.type+" ["+e.hitKeys+"] e.testXY=("+e.testX+","+e.testY+")"+" e.localXY=("+e.localX+","+e.localY+")")
         }
         var addLogMouseEvent = function(l){
           if(!l.click){     l.click     = logMouseEvent }
@@ -40,39 +40,45 @@
         }
 
         //----------------------------------
-        var blue = p1.root.createChild({name:"blue", x:40, y:40,
+        var blue = p1.root.createChild({name:"*blue", x:40, y:40,
           draw: function(ctx){
-            drawZero(ctx, "#0000ff")
             ctx.fillStyle = "#0000FF"
-            ctx.fillRect(0, 0, 50, 50, "hit=rectBlue")
+            ctx.fillRect(0, 0, 50, 50, "b")
+            ctx.fillStyle = "#00FF00"
+            ctx.fillRect(10, 10, 10, 10, "g")
+            ctx.fillStyle = "#FF0000"
+            ctx.fillRect(30, 10, 10, 10, "r")
+            ctx.fillStyle = "#FFFF00"
+            ctx.fillRect(15, 30, 20, 10, "y")
+            drawZero(ctx, "#000044")
           },
         })
         addLogMouseEvent(blue)
 
         //----------------------------------
-        var red1 = p1.root.createChild({name:"red1", x:200, y:200,
+        var red1 = p1.root.createChild({name:"*red1", x:200, y:200,
           draw: function(ctx){
             drawZero(ctx, "#FFCCCC")
             ctx.fillStyle = "#FFCCCC"
-            ctx.fillRect(2, 2, 45, 5, "hit=rectRed1")
+            ctx.fillRect(2, 2, 45, 5, "r1")
           },
         })
         addLogMouseEvent(red1)
 
-        var red2 = red1.createChild({name:"red2", x:50, y:0,
+        var red2 = red1.createChild({name:"*red2", x:50, y:0,
           draw: function(ctx){
             drawZero(ctx, "#FF6666")
             ctx.fillStyle = "#FF6666"
-            ctx.fillRect(2, 2, 45, 5, "hit=rectRed2")
+            ctx.fillRect(2, 2, 45, 5, "r2")
           },
         })
         addLogMouseEvent(red2)
 
-        var red3 = red2.createChild({name:"red3", x:50, y:0,
+        var red3 = red2.createChild({name:"*red3", x:50, y:0,
           draw: function(ctx){
             drawZero(ctx, "#FF0000")
             ctx.fillStyle = "#FF0000"
-            ctx.fillRect(2, 2, 45, 5, "hit=rectRed3")
+            ctx.fillRect(2, 2, 45, 5, "r3")
 
             var xy = [50,0].transform(ctx.currentState().mat2d)
             red3b.x = xy[0]
@@ -82,7 +88,7 @@
         addLogMouseEvent(red3)
 
         // for Mat2D test
-        var red3b = p1.root.createChild({name:"red3->[50,0]", x:0, y:0,
+        var red3b = p1.root.createChild({name:"*red3->[50,0]", x:0, y:0,
           draw: function(ctx){
             drawZero(ctx, "#0000cc")
           }
@@ -90,38 +96,37 @@
         addLogMouseEvent(red3b)
 
         //----------------------------------
-        var green = p1.root.createChild({name:"green", x:10, y:60, fillStyle:"#008800",
+        var green = p1.root.createChild({name:"*green", x:10, y:60, fillStyle:"#008800",
           draw: function(ctx){
-            drawZero(ctx, "#008800")
             ctx.fillStyle = this.fillStyle
-            ctx.fillRect(0, 0, 5+blue.y/2, 10+orange.x/10, "hit=rectGreen")
+            ctx.fillRect(0, 0, 5+blue.y/2, 10+orange.x/10, "g")
+            drawZero(ctx, "#004400")
           }
         })
         addLogMouseEvent(green)
 
         //----------------------------------
-        var black = p1.root.createChild({name:"black", x:5, y:5, visible:false,
+        var black = p1.root.createChild({name:"*black", x:5, y:5, visible:false,
           draw: function(ctx){
             ctx.fillStyle = "#000000"
-            ctx.fillRect(0, 0, 30, 10+blue.y, "hit=rectBlack")
+            ctx.fillRect(0, 0, 30, 10+blue.y, "black")
             //ctx.strokeRect(0, 0, 10+blue.y, 30)
           }
         })
         addLogMouseEvent(black)
 
         //----------------------------------
-        var text = p1.root.createChild({name:"text", x:60, y:60,
+        var text = p1.root.createChild({name:"*text", x:60, y:60,
           draw: function(ctx){
             drawZero(ctx, "#000000")
-            ctx.fillText("hello? 123 456 789 abc def", 20, 20, 50, "", "hit=text")
+            ctx.fillText("hello? 123 456 789 abc def", 20, 20, 50, "", "t")
           }
         })
         addLogMouseEvent(text)
 
         //----------------------------------
-        var orange = blue.createChild({name:"orange", x:30, y:0, fillStyle:"#FF8800",
+        var orange = blue.createChild({name:"*orange", x:30, y:0, fillStyle:"#FF8800",
           draw: function(ctx){
-            drawZero(ctx, "#ff8800")
             ctx.lineWidth = 4
             ctx.strokeStyle = "#00FF00"
             ctx.fillStyle = this.fillStyle
@@ -129,8 +134,9 @@
             ctx.moveTo( 0,  0)
             ctx.lineTo(40,  0)
             ctx.lineTo( 0, 40)
-            ctx.fill("hit=fillOrange")
+            ctx.fill("o")
             ctx.stroke()
+            drawZero(ctx, "#000000")
           },
           mousemove: function(){
             black.visible = true
@@ -148,11 +154,11 @@
         addLogMouseEvent(orange)
 
         //----------------------------------
-        var yellow = orange.createChild({name:"yellow", x:-40, y:80,
+        var yellow = orange.createChild({name:"*yellow", x:-40, y:80,
           draw: function(ctx){
-            drawZero(ctx, "#FFFF00")
+            drawZero(ctx, "#FF8800")
             ctx.fillStyle = "#FFFF00"
-            ctx.fillRect(0, 0, 20, 20, "hit=rectYellow")
+            ctx.fillRect(0, 0, 20, 20, "y")
           },
         })
         addLogMouseEvent(yellow)
@@ -168,6 +174,7 @@
           blue.y += dy
           if(blue.y<=0){  dy = +1; }
           if(30<=blue.y){ dy = -2; }
+          blue.rotation += 1/180*Math.PI
 
           text.x = orange.x*2
           text.y = 70-blue.y
@@ -179,7 +186,7 @@
 
           p1.redraw();
           timer_counter++
-          if(10<timer_counter){
+          if(45<=timer_counter){
             clearInterval(timer)
           }
         }
