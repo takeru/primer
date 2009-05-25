@@ -5,7 +5,6 @@ function definePrimer($) {
   var Primer = Class.create({
     initialize : function(opts){
       this.container          = opts.container
-      this.useGlobalMouseMove = opts.useGlobalMouseMove
       this.debug              = opts.debug
       this.context            = null
       this.width              = $(this.container).width()
@@ -61,8 +60,10 @@ function definePrimer($) {
     _mouse_event_callback: function(e){
       var next = e.data.next
       var bounds = $(e.currentTarget).offset()
-      e.localX = e.pageX - bounds.left
-      e.localY = e.pageY - bounds.top
+//log("e.currentTarget", e.currentTarget)
+//log("localXY", e.localX, e.localY)
+      e.globalX = e.pageX - bounds.left // (x,y) on global div.
+      e.globalY = e.pageY - bounds.top
       if (this.root.x!=0 || this.root.y!=0) {
         log("WARN x/y is not 0", this.root.x, this.root.y)
       }
@@ -90,16 +91,17 @@ function definePrimer($) {
 
     _next_mousedown: function(e,hits){
 //      log("_next_mousedown", this)
-      this.mousestate.down = {x:e.localX, y:e.localY, hits:hits}
+      this.mousestate.down = {globalX:e.globalX, globalY:e.globalY, hits:hits}
     },
+
     _next_mouseup: function(e,hits){
 //      log("_next_mouseup")
       this.mousestate.down = undefined
-
-      if(this.mousestate.drag){
-        this.mousestate.drag.end = {x:e.localX, y:e.localY}
-//log("dragEnd", this.mousestate.drag)
-        var dropAcceptResults = this._fire_event("dropAccept", hits, this.mousestate.drag)
+      var drag = this.mousestate.drag
+      if(drag){
+        drag.end = {globalX:e.globalX, globalY:e.globalY}
+//log("dragEnd", drag)
+        var dropAcceptResults = this._fire_event("dropAccept", hits, drag)
         var dropTarget = null
         for(var i=0; i<dropAcceptResults.length; i++){
           var r = dropAcceptResults[i]
@@ -108,31 +110,38 @@ function definePrimer($) {
           }
         }
 //log("dropTarget", dropTarget)
-        this.mousestate.drag.dropTarget = dropTarget
-        if(dropTarget){
-          var droppedResults = this._fire_event("dropped", [dropTarget], this.mousestate.drag)
+        drag.dropTarget = dropTarget
+        if(drag.dragTarget){
+          var localXY = [drag.end.globalX, drag.end.globalY].transform(drag.dragTarget.mat2d.inv())
+          drag.end.localX = localXY[0]
+          drag.end.localY = localXY[1]
+          var dragEndResults = this._fire_event("dragEnd", [drag.dragTarget], drag)
         }
-        if(this.mousestate.drag.dragTarget){
-          var dragEndResults = this._fire_event("dragEnd", [this.mousestate.drag.dragTarget], this.mousestate.drag)
+        if(dropTarget){
+          var droppedResults = this._fire_event("dropped", [dropTarget], drag)
         }
       }
       this.mousestate.drag = undefined
     },
+
     _next_mousemove: function(e,hits){
       //log("mousemove")
       if(this.mousestate.drag){
         // draging
         var drag = this.mousestate.drag
-        drag.current = {x:e.localX, y:e.localY}
+        drag.current = {globalX:e.globalX, globalY:e.globalY, }
 //log("dragging", drag)
         if(drag.dragTarget){
-          var draggingResults = this._fire_event("dragging", [drag.dragTarget])
+          var localXY = [drag.current.globalX, drag.current.globalY].transform(drag.dragTarget.mat2d.inv())
+          drag.current.localX = localXY[0]
+          drag.current.localY = localXY[1]
+          var draggingResults = this._fire_event("dragging", [drag.dragTarget], this.mousestate.drag)
         }
         var dropAcceptResults = this._fire_event("dropAccept", hits, this.mousestate.drag)
       }else{
         var down = this.mousestate.down
         if(down){
-          var d = Primer.distance(down.x, down.y, e.localX, e.localY)
+          var d = Primer.distance(down.globalX, down.globalY, e.globalX, e.globalY)
           if(5<d){
             var results = this._fire_event("dragAccept", down.hits)
             var dragTarget = null
@@ -142,10 +151,16 @@ function definePrimer($) {
                 dragTarget = r.hit
               }
             }
-            this.mousestate.drag = {begin:{x:down.x,y:down.y}, dragTarget:dragTarget}
+            this.mousestate.drag = {begin:{globalX:down.globalX,
+                                           globalY:down.globalY},
+                                    dragTarget:dragTarget}
 //log("dragBegin", this.mousestate.drag, results)
             if(dragTarget){
-              var dragBeginResults = this._fire_event("dragBegin", [dragTarget])
+              this.mousestate.drag.begin.localX = dragTarget.localX;
+              this.mousestate.drag.begin.localY = dragTarget.localY;
+              this.mousestate.drag.begin.initX  = dragTarget.layer.x;
+              this.mousestate.drag.begin.initY  = dragTarget.layer.y;
+              var dragBeginResults = this._fire_event("dragBegin", [dragTarget], this.mousestate.drag)
             }
           }
         }
@@ -287,52 +302,15 @@ function definePrimer($) {
 
         testHit: function(hitKey) {
           var cs = this.currentState()
-          var testXY = [this.hitDetect.event.localX, this.hitDetect.event.localY].transform(cs.mat2d.inv())
-          this.hitDetect.testX = testXY[0]
-          this.hitDetect.testY = testXY[1]
-          if(this.isPointInPath(this.hitDetect.testX, this.hitDetect.testY)) {
+          var localXY = [this.hitDetect.event.globalX, this.hitDetect.event.globalY].transform(cs.mat2d.inv())
+          this.hitDetect.localX = localXY[0]
+          this.hitDetect.localY = localXY[1]
+          this.hitDetect.mat2d  = cs.mat2d
+          if(this.isPointInPath(this.hitDetect.localX, this.hitDetect.localY)) {
             this.hitDetect.hit = true
             this.hitDetect.hitKeys.push(hitKey)
           }
         },
-/*
-          case "fillRect":         _this._hitDetect_fillRect(primer, e, call[1], call[2], call[3], call[4]); break
-          case "fill":             _this._hitDetect_fill(primer, e); break
-        _hitDetect_detect: function(primer, e) {
-          if (!jQuery.browser.safari) {
-            testX = e.localX - this.x
-            testY = e.localY - this.y
-          } else {
-            testX = e.localX
-            testY = e.localY
-          }
-          if(primer.context.isPointInPath(testX, testY)) {
-            if(!this.mouseWithin) {
-              primer.actions.push([this.mouseoverVal, e])
-            }
-            this.mouseWithin = true
-          } else {
-            if(this.mouseWithin) {
-              primer.actions.push([this.mouseoutVal, e])
-            }
-            this.mouseWithin = false
-          }
-        },
-
-        _hitDetect_fillRect: function(primer, e, x, y, w, h) {
-          primer.context.beginPath()
-          primer.context.moveTo(x  , y  )
-          primer.context.lineTo(x+w, y  )
-          primer.context.lineTo(x+w, y+h)
-          primer.context.lineTo(x  , y+h)
-          primer.context.lineTo(x  , y  )
-          this._hitDetect_detect(primer, e)
-        },
-
-        _hitDetect_fill: function(primer, e) {
-          this._hitDetect_detect(primer, e)
-        }
-*/
       })
       this.context.initExt()
     },
@@ -364,14 +342,6 @@ function definePrimer($) {
     setXY : function(x, y){
       this.x = x
       this.y = y
-    },
-
-    /* global x and y getters */
-    globalX: function() {
-      return this.x + this.parent.globalX()
-    },
-    globalY: function() {
-      return this.y + this.parent.globalY()
     },
 
     /* children */
@@ -461,10 +431,10 @@ function definePrimer($) {
     /* hit */
     _hit: function(primer, e) {
       if(!this.visible) { return [] }
-//log(this.name, e.localX, e.localY)
       var hits = []
       primer.context.hitDetect = {layer:this, hit:false, event:e,
-                                  testX:undefined, testY:undefined, hitKeys:[]}
+                                  x:undefined, y:undefined,
+                                  hitKeys:[]}
       primer.context.save()
       primer.context.translate(this.x, this.y)
       primer.context.rotate(this.rotation)
