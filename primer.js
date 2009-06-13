@@ -89,89 +89,142 @@ function definePrimer($) {
       return results
     },
 
+    _next_click: function(e,hits){
+//      log("_next_click")
+    },
+
     _next_mousedown: function(e,hits){
 //      log("_next_mousedown", this)
       this.mousestate.down = {globalX:e.globalX, globalY:e.globalY, hits:hits}
+    },
+
+    _next_mousemove: function(e,hits){
+      if(this.mousestate.drag){
+        this.__drag_dragging(e,hits)
+      }else{
+        var down = this.mousestate.down
+        if(down){
+          var d = Primer.distance(down.globalX, down.globalY, e.globalX, e.globalY)
+          if(5<d){ this.__drag_begin(e,hits) }
+        }
+      }
     },
 
     _next_mouseup: function(e,hits){
 //      log("_next_mouseup")
       this.mousestate.down = undefined
       var drag = this.mousestate.drag
-      if(drag){
-        drag.end = {globalX:e.globalX, globalY:e.globalY}
-//log("dragEnd", drag)
-        var dropAcceptResults = this._fire_event("dropAccept", hits, drag)
-        var dropTarget = null
-        for(var i=0; i<dropAcceptResults.length; i++){
-          var r = dropAcceptResults[i]
-          if(r.result){
-            dropTarget = r.hit
-          }
-        }
-//log("dropTarget", dropTarget)
-        drag.dropTarget = dropTarget
-        if(drag.dragTarget){
-          var localXY = [drag.end.globalX, drag.end.globalY].transform(drag.dragTarget.mat2d.inv())
-          drag.end.localX = localXY[0]
-          drag.end.localY = localXY[1]
-          var dragEndResults = this._fire_event("dragEnd", [drag.dragTarget], drag)
-        }
-        if(dropTarget){
-          var droppedResults = this._fire_event("dropped", [dropTarget], drag)
-        }
-      }
+      if(drag){ this.__drag_end(e,hits) }
       this.mousestate.drag = undefined
     },
 
-    _next_mousemove: function(e,hits){
-      //log("mousemove")
-      if(this.mousestate.drag){
-        // draging
-        var drag = this.mousestate.drag
-        drag.current = {globalX:e.globalX, globalY:e.globalY, }
-//log("dragging", drag)
-        if(drag.dragTarget){
-          var localXY = [drag.current.globalX, drag.current.globalY].transform(drag.dragTarget.mat2d.inv())
-          drag.current.localX = localXY[0]
-          drag.current.localY = localXY[1]
-          var draggingResults = this._fire_event("dragging", [drag.dragTarget], this.mousestate.drag)
-        }
-        var dropAcceptResults = this._fire_event("dropAccept", hits, this.mousestate.drag)
-      }else{
-        var down = this.mousestate.down
-        if(down){
-          var d = Primer.distance(down.globalX, down.globalY, e.globalX, e.globalY)
-          if(5<d){
-            var results = this._fire_event("dragAccept", down.hits)
-            var dragTarget = null
-            for(var i=0; i<results.length; i++){
-              var r = results[i]
-              if(r.result){
-                dragTarget = r.hit
-              }
-            }
-            this.mousestate.drag = {begin:{globalX:down.globalX,
-                                           globalY:down.globalY},
-                                    dragTarget:dragTarget}
-//log("dragBegin", this.mousestate.drag, results)
-            if(dragTarget){
-              this.mousestate.drag.begin.localX = dragTarget.localX;
-              this.mousestate.drag.begin.localY = dragTarget.localY;
-              this.mousestate.drag.begin.initX  = dragTarget.layer.x;
-              this.mousestate.drag.begin.initY  = dragTarget.layer.y;
-              var dragBeginResults = this._fire_event("dragBegin", [dragTarget], this.mousestate.drag)
-            }
-          }
+/*
+[drag events]
+ -dragAccept()
+   if callback returns true, drag will begin.
+
+ -dragBegin(drag:DragData)
+   drag is began.
+
+ -dragging(drag:DragData)
+
+ -dragEnd(drag:DragData)
+
+ -dropAccept(drag:DragData)
+
+ -dropped(drag:DragData)
+
+ -class DragData
+   .dragTarget                : class Hit at drag-begin
+   .dropTarget                : class Hit
+   .beginPosition             : class Position @dragBegin event.
+   .currentPosition           : class Position @dragging event.
+   .endPosition               : class Position @dragEnd event.
+
+ -class Position
+   .globalX/Y
+   .localX/Y
+   .parentX/Y
+   .x/y                       : layer.x/y when drag began.
+
+ -class Hit
+   .localX/Y
+   .parentX/Y
+   .event
+   .event.globalX/Y
+
+
+*/
+    __drag_begin: function(e,mousemove_hits){
+      var down = this.mousestate.down
+      var results = this._fire_event("dragAccept", down.hits)
+      var dragTarget = null
+      for(var i=0; i<results.length; i++){
+        var r = results[i]
+        if(r.result){
+          dragTarget = r.hit
         }
       }
+//log("__drag_begin", dragTarget)
+      this.mousestate.drag = {dragTarget:dragTarget}
+      var drag = this.mousestate.drag
+      drag.beginPosition = {globalX:down.globalX, globalY:down.globalY}
+      if(dragTarget){
+        Primer.setLocalParentXY(drag.beginPosition,
+                                drag.beginPosition.globalX,
+                                drag.beginPosition.globalY,
+                                drag.dragTarget.currentMat2d,
+                                drag.dragTarget.parentMat2d)
+        drag.beginPosition.x = dragTarget.layer.x
+        drag.beginPosition.y = dragTarget.layer.y
+        var dragBeginResults = this._fire_event("dragBegin", [dragTarget], this.mousestate.drag)
+      }
     },
-    _next_click: function(e,hits){
-//      log("_next_click")
+
+    __drag_dragging: function(e,mousemove_hits){
+      var drag = this.mousestate.drag
+      drag.currentPosition = {globalX:e.globalX, globalY:e.globalY}
+//log("dragging", drag)
+      if(drag.dragTarget){
+        Primer.setLocalParentXY(drag.currentPosition,
+                                drag.currentPosition.globalX,
+                                drag.currentPosition.globalY,
+                                drag.dragTarget.currentMat2d,
+                                drag.dragTarget.parentMat2d)
+        var draggingResults = this._fire_event("dragging", [drag.dragTarget], this.mousestate.drag)
+      }
+log(this.mousestate.drag)
+      var dropAcceptResults = this._fire_event("dropAccept", mousemove_hits, this.mousestate.drag)
+    },
+
+    __drag_end: function(e,mouseup_hits){
+      var drag = this.mousestate.drag
+      drag.endPosition = {globalX:e.globalX, globalY:e.globalY}
+//log("dragEnd", drag)
+      var dropAcceptResults = this._fire_event("dropAccept", mouseup_hits, drag)
+      var dropTarget = null
+      for(var i=0; i<dropAcceptResults.length; i++){
+        var r = dropAcceptResults[i]
+        if(r.result){
+          dropTarget = r.hit
+        }
+      }
+//log("dropTarget", dropTarget)
+      drag.dropTarget = dropTarget
+      if(drag.dragTarget){
+        Primer.setLocalParentXY(drag.endPosition,
+                                drag.endPosition.globalX,
+                                drag.endPosition.globalY,
+                                drag.dragTarget.currentMat2d,
+                                drag.dragTarget.parentMat2d)
+        var dragEndResults = this._fire_event("dragEnd", [drag.dragTarget], drag)
+      }
+      if(dropTarget){
+        var droppedResults = this._fire_event("dropped", [dropTarget], drag)
+      }
     },
 
     redraw: function() {
-//log("redraw---------------------")
       this.context.clearRect(0, 0, this.width, this.height)
       this.context.resetTextLayer()
       this.root._draw(this)
@@ -227,18 +280,17 @@ function definePrimer($) {
 
         orig_translate: this.context.translate,
         translate: function(x, y){
-          var cs = this.currentState()
-          cs.mat2d = cs.mat2d.translate(x,y) //Mat2D.translate(x, y).x(cs.mat2d)
-          this.orig_translate(x, y)
+          var cs = this.currentState();
+          cs.mat2d = cs.mat2d.translate(x,y);
+          this.orig_translate(x,y);
         },
 
         orig_rotate: this.context.rotate,
         rotate: function(r){
           var cs = this.currentState()
-          cs.mat2d = cs.mat2d.rotate(r) //Mat2D.rotate(r).x(cs.mat2d)
+          cs.mat2d = cs.mat2d.rotate(r)
           this.orig_rotate(r)
         },
-// TODO save states as 'transform matrix' http://www.html5.jp/canvas/ref/method/transform.html
 
         orig_save: this.context.save,
         save: function(){
@@ -260,6 +312,10 @@ function definePrimer($) {
 
         currentState: function(){
           return this.stateStack[0]
+        },
+
+        parentState: function(){
+          return this.stateStack[1]
         },
 
         orig_fillRect: this.context.fillRect,
@@ -302,10 +358,15 @@ function definePrimer($) {
 
         testHit: function(hitKey) {
           var cs = this.currentState()
-          var localXY = [this.hitDetect.event.globalX, this.hitDetect.event.globalY].transform(cs.mat2d.inv())
-          this.hitDetect.localX = localXY[0]
-          this.hitDetect.localY = localXY[1]
-          this.hitDetect.mat2d  = cs.mat2d
+          this.hitDetect.currentMat2d = cs.mat2d
+          var ps = this.parentState()
+          this.hitDetect.parentMat2d = ps ? ps.mat2d : null
+          Primer.setLocalParentXY(this.hitDetect,
+                                  this.hitDetect.event.globalX,
+                                  this.hitDetect.event.globalY,
+                                  this.hitDetect.currentMat2d,
+                                  this.hitDetect.parentMat2d)
+
           if(this.isPointInPath(this.hitDetect.localX, this.hitDetect.localY)) {
             this.hitDetect.hit = true
             this.hitDetect.hitKeys.push(hitKey)
@@ -318,6 +379,19 @@ function definePrimer($) {
 
   Primer.distance = function(x0, y0, x1, y1){
     return Math.sqrt( (x0-x1)*(x0-x1) + (y0-y1)*(y0-y1) )
+  }
+
+  Primer.setLocalParentXY = function(obj, gx, gy, lmat, pmat){
+//log("setLocalParentXY", arguments)
+    var localXY = [gx, gy].transform(lmat.inv())
+    obj.localX = localXY[0]
+    obj.localY = localXY[1]
+    if(pmat){
+      var parentXY = [gx, gy].transform(pmat.inv())
+      obj.parentX = parentXY[0]
+      obj.parentY = parentXY[1]
+    }
+    return obj
   }
 
   Primer.Layer = Class.create({
@@ -334,15 +408,16 @@ function definePrimer($) {
 
       this.parent = null
       this.children = []
-      //this.mouseoverVal = function() { }
-      //this.mouseoutVal = function() { }
-      //this.mouseWithin = false
     },
 
     setXY : function(x, y){
       this.x = x
       this.y = y
     },
+
+//    parentXY: function(lx, ly){
+//      return Mat2D.transrate(this.x, this.y).rotate(this.rotation).transform(lx, ly)
+//    },
 
     /* children */
     createChild: function(init){

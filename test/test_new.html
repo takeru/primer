@@ -31,8 +31,11 @@
           ctx.stroke()
         }
         var logMouseEvent = function(hit, pars){
-          log(hit.layer.name+":"+hit.event.type+" ["+hit.hitKeys+"] localXY=("+hit.localX+","+hit.localY+")"
-                                                                +" globalXY=("+hit.event.globalX+","+hit.event.globalY+")")
+          log(hit.layer.name+":"+hit.event.type+" ["+hit.hitKeys+"]"
+              +" localXY=("+hit.localX+","+hit.localY+")"
+              +" parentXY=("+hit.parentX+","+hit.parentY+")"
+              +" globalXY=("+hit.event.globalX+","+hit.event.globalY+")"
+              )
         }
         var addLogMouseEvent = function(l){
           if(!l.click){     l.click     = logMouseEvent; return true; }
@@ -53,7 +56,7 @@
           },
 //----------------------
           dragAccept: function(e){
-            return false; //return true
+            return false;
           },
           dragBegin: function(e, drag){
             log("dragBegin:"+this.name)
@@ -67,19 +70,18 @@
           dropAccept: function(e, drag){
             if(drag.dragTarget && drag.dragTarget.layer.parent==this){
               log("dropAccept:"+this.name, drag.dragTarget.layer.name)
-              drag.dragTarget.layer.x = drag.begin.initX+drag.current.localX-drag.begin.localX
-              drag.dragTarget.layer.y = drag.begin.initY+drag.current.localY-drag.begin.localY
+              drag.dragTarget.layer.x = drag.beginPosition.x + drag.currentPosition.parentX - drag.beginPosition.parentX
+              drag.dragTarget.layer.y = drag.beginPosition.y + drag.currentPosition.parentY - drag.beginPosition.parentY
               p1.redraw()
               return true
             }
           },
           dropped: function(e, drag){
             log("dropped:"+this.name, "dragTarget="+drag.dragTarget.layer.name)
-            var dx = drag.end.localX-drag.begin.localX
-            var dy = drag.end.localY-drag.begin.localY
-log("dxdy", dx, dy)
-            drag.dragTarget.layer.x = drag.begin.initX + dx
-            drag.dragTarget.layer.y = drag.begin.initY + dy
+            if(drag.dragTarget.layer.name=="*dragtest"){
+              drag.dragTarget.layer.x = drag.beginPosition.x
+              drag.dragTarget.layer.y = drag.beginPosition.y
+            }
             p1.redraw()
           },
 //-------------------------------

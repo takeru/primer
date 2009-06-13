@@ -263,6 +263,7 @@ Array.prototype.translate0 = function(zx,zy){
 }
 
 Mat2D.test = function(){
+/*
   var x  = 50
   var y  =  0
 
@@ -326,4 +327,20 @@ Mat2D.test = function(){
     var xy2 = xy1.transform(inv)
     log(xy0, xy1, xy2)
   })
+*/
+
+  var a = Mat2D.translate(20,30)
+  var b = Mat2D.translate(10,10).rotate(30)
+  var c = Mat2D.translate(20,10).rotate(30)
+
+  //var xy = [5,5].transform( a.x(b).x(c) )
+  //log( xy )
+  //log( [5,5].transform( a.x(b).x(c).x(c.inv()) ) )
+  //log( [5,5].transform( a.x(b)                 ) )
+  //log( xy.transform(c.inv()) )
+  var xy = [5,5].x(a).x(b).x(c)
+  log( xy )
+  log( [5,5].x(a).x(b).x(c).x(c.inv()) )
+  log( [5,5].x(a).x(b)                 )
+  log( xy.x( c.inv() )                 )
 }

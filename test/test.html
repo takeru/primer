@@ -1,66 +1,147 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
     <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
     <title>Primer Test</title>
-    <script src="./excanvas.js" type="text/javascript"></script>
-    <script src="./jquery-1.2.6.min.js" type="text/javascript"></script>
-    <script src="../primer.js" type="text/javascript"></script>
+    <script type="text/javascript" src="../prototype-1.6.0.3.js"></script>
+    <script type="text/javascript" src="../jquery-1.3.2.js"     ></script>
     <script type="text/javascript">
-      $(function() {
-        // var el = $('#p1').get(0)
-        var el = "#p1"
-        
-        var p1 = new Primer(el, 300, 300)
-        
-        var hold = new Primer.Layer()
-        hold.fillRect(0, 0, 2, 2)
-        hold.setX(20)
-        hold.setY(20)
-        p1.addChild(hold)
-        
-        var box = new Primer.Layer()
-        box.fillRect(0, 0, 10, 10)
-        box.setVisible(false)
-        
-        p1.addChild(box)
-        
-        var square = new Primer.Layer()
-        square.setStrokeStyle("#00FF00")
-        square.setFillStyle("#FF0000")
-        square.beginPath()
-        square.moveTo(0, 0)
-        square.lineTo(20, 0)
-        square.lineTo(0, 20)
-        square.fill()
-        
-        square.setX(50)
-        square.setY(50)
-        
-        hold.addChild(square)
-        
-        
-        square.mouseover(function() {
-          box.setVisible(true)
-        })
-        
-        square.mouseout(function() {
-          box.setVisible(false)
-        })
-        
-        function go() {
-          square.x += 1
-          square.visible = !square.visible
+      jQuery.noConflict()
+      $j = jQuery
+      $p = $
+    </script>
+    <script type="text/javascript" src="../excanvas_r3.compiled.js"></script>
+    <script type="text/javascript" src="../matrix.js"              ></script>
+    <script type="text/javascript" src="../primer.js"              ></script>
+
+    <script type="text/javascript">
+//Mat2D.test()
+      var DEG_TO_RAD = Math.PI/180;
+
+      jQuery(function() {
+        var p1 = new Primer({container:"#div1", debug:true})
+
+        var drawZero = function(ctx, color){
+          ctx.strokeStyle = color
+          ctx.lineWidth = 1
+          ctx.beginPath()
+          ctx.moveTo( 0, 30)
+          ctx.lineTo( 0,  0)
+          ctx.lineTo(20,  0)
+          ctx.stroke()
         }
-        
-        // setInterval(go, 100)
+        var logMouseEvent = function(hit, pars){
+          log(hit.layer.name+":"+hit.event.type+" ["+hit.hitKeys+"]"
+              +" localXY=("+hit.localX+","+hit.localY+")"
+              +" parentXY=("+hit.parentX+","+hit.parentY+")"
+              +" globalXY=("+hit.event.globalX+","+hit.event.globalY+")"
+              )
+        }
+        var addLogMouseEvent = function(l){
+          if(!l.click){     l.click     = logMouseEvent; return true; }
+//        if(!l.mousedown){ l.mousedown = logMouseEvent; return true; }
+//        if(!l.mouseup){   l.mouseup   = logMouseEvent; return true; }
+        }
+
+        //----------------------------------
+        var base = p1.root.createChild({name:"*base", x:0, y:0,
+          draw: function(ctx){
+            ctx.fillStyle = "#dddddd"
+            ctx.fillRect(0, 0, 390, 390, "base")
+            ctx.strokeStyle = "#000000"
+
+            ctx.strokeWidth = 30
+            ctx.strokeRect(0, 0, 390, 390)
+
+            drawZero(ctx, "#ff0000")
+
+            // grid
+            ctx.strokeWidth = 1
+            var n;
+            for(n=-10; n<=200; n+=10){
+              ctx.strokeStyle = n%50==0 ? "#880000" : "#000088"
+              ctx.beginPath()
+              ctx.moveTo(-10, n)
+              ctx.lineTo(200, n)
+              ctx.moveTo(n, -10)
+              ctx.lineTo(n, 200)
+              ctx.stroke()
+            }
+          },
+//----------------------
+          dragAccept: function(e){
+            return false; //return true
+          },
+          dragBegin: function(e, drag){
+            log("dragBegin:"+this.name)
+          },
+          dragging: function(e, drag){
+            log("dragging:"+this.name)
+          },
+          dragEnd: function(e, drag){
+            log("dragEnd:"+this.name, "dropTarget="+(drag.dropTarget ? drag.dropTarget.layer.name : "----"))
+          },
+          dropAccept: function(e, drag){
+            if(drag.dragTarget && drag.dragTarget.layer.parent==this){
+              log("dropAccept:"+this.name, drag.dragTarget.layer.name)
+//              drag.dragTarget.layer.x = drag.begin.initX +drag.current.localX -drag.begin.localX
+//              drag.dragTarget.layer.y = drag.begin.initY +drag.current.localY -drag.begin.localY
+              // e.globalX -> drag.begin.localX になるように drag.dragTarget.layer.xを設定する
+              // local{x,y,r} * parent{x,y,r} * ... * root{x,y,r} * [lx,ly] = [gx, gy]
+              //                parent{x,y,r} * ... * root{x,y,r} * [lx,ly] = local{x,y,r}^-1 * [gx, gy]
+              log(drag)
+
+              drag.dragTarget.layer.x = drag.begin.initX +drag.current.localX -drag.begin.localX
+              drag.dragTarget.layer.y = drag.begin.initY +drag.current.localY -drag.begin.localY
+              p1.redraw()
+              return true
+            }
+          },
+          dropped: function(e, drag){
+            log("dropped:"+this.name, "dragTarget="+drag.dragTarget.layer.name)
+            var dx = drag.end.localX-drag.begin.localX
+            var dy = drag.end.localY-drag.begin.localY
+log("dxdy", dx, dy)
+            drag.dragTarget.layer.x = drag.begin.initX + dx
+            drag.dragTarget.layer.y = drag.begin.initY + dy
+            p1.redraw()
+          },
+//-------------------------------
+          click: function(e){
+          },
+        })
+        addLogMouseEvent(base)
+
+        //----------------------------------
+        var blue = base.createChild({name:"*blue", x:100, y:50, rotation:45*DEG_TO_RAD,
+          draw: function(ctx){
+            ctx.translate(-25, -25)
+            ctx.fillStyle = "#0000FF"
+            ctx.fillRect(0, 0, 50, 50, "b")
+            ctx.fillStyle = "#00FF00"
+            ctx.fillRect(10, 10, 10, 10, "g")
+            ctx.fillStyle = "#FF0000"
+            ctx.fillRect(30, 10, 10, 10, "r")
+            ctx.fillStyle = "#FFFF00"
+            ctx.fillRect(15, 30, 20, 10, "y")
+            drawZero(ctx, "#000044")
+          },
+          dragAccept: function(){
+            return true;
+          },
+        })
+        addLogMouseEvent(blue)
+
+        p1.redraw();
       })
     </script>
   </head>
+
   <body>
     <p>Testing</p>
-    <div id="p1"><canvas width="300" height="300" style="z-index: 1;"></canvas></div>
+    <div style="border:5px #333333 solid;">
+      <div id="div1" style="width:400px; height:400px; border:5px gray solid;"></div>
+    </div>
   </body>
 </html>
